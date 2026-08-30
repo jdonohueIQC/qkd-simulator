@@ -339,8 +339,14 @@
     box-shadow: 0 0 7px 2px var(--beam-glow);
   }
   .detector-icon{
-    width:20px; height:40px; background:var(--bg-panel-2); border:1px solid var(--line);
-    border-left:none; border-top-right-radius:40px; border-bottom-right-radius:40px;
+    width:30px; height:58px; background:var(--bg-panel-2); border:1px solid var(--line);
+    border-left:none; border-top-right-radius:56px; border-bottom-right-radius:56px;
+    position:relative; display:flex; align-items:center; justify-content:center;
+  }
+  .detector-basis{
+    font-family: var(--font-mono); font-weight:700; font-size:16px;
+    color: var(--bob-bright); line-height:1; margin-left:4px;
+    transition: color .2s;
   }
   .beam-photon{
     position:absolute; top:50%; left:0; transform:translate(-50%,-50%);
@@ -642,7 +648,7 @@
     <div class="beam-eve-marker" id="beamEveMarker"><span class="tag-pill tag-eve">Eve</span></div>
 
     <div class="beam-endpoint end">
-      <div class="beam-icon detector-icon"></div>
+      <div class="beam-icon detector-icon"><span class="detector-basis" id="detectorBasisIcon">+</span></div>
       <span class="tag-pill tag-bob">Bob</span>
     </div>
 
@@ -937,8 +943,14 @@
   const eveDial = buildDial(document.getElementById('eveDial'),
     ['HV','DA'].map(k => ({ key:k, angle: EVE_BASES[k].angle, label: EVE_BASES[k].label })));
 
+  const detectorBasisIcon = document.getElementById('detectorBasisIcon');
+  function setBobBasisDial(key){
+    bobDial.setKey(key);
+    detectorBasisIcon.textContent = key === 'HV' ? '+' : '\u00D7';
+  }
+
   aliceDial.setKey('H');
-  bobDial.setKey('HV');
+  setBobBasisDial('HV');
   eveDial.setKey('HV');
 
   /* ---- pill rows ---- */
@@ -974,7 +986,7 @@
     { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
   ], (key) => {
     if (key === 'RANDOM'){ state.bobRandom = true; }
-    else { state.bobRandom = false; state.bobBasis = key; bobDial.setKey(key); }
+    else { state.bobRandom = false; state.bobBasis = key; setBobBasisDial(key); }
     refreshAll();
   });
 
@@ -1214,7 +1226,7 @@
     const result = sendOnePhoton(opts);
 
     aliceDial.setKey(result.aliceKey);
-    bobDial.setKey(result.bobBasis);
+    setBobBasisDial(result.bobBasis);
     if (result.eve) eveDial.setKey(result.eve.basis);
     if (state.aliceRandom) noteRandomAlice(result.aliceKey);
     if (state.bobRandom) noteRandomBob(result.bobBasis);
@@ -1285,7 +1297,7 @@
       while (processed < shouldHave){
         const result = sendOnePhoton(opts);
         aliceDial.setKey(result.aliceKey);
-        bobDial.setKey(result.bobBasis);
+        setBobBasisDial(result.bobBasis);
         if (result.eve) eveDial.setKey(result.eve.basis);
         addRecord({
           n: state.log.length + 1,
