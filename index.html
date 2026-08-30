@@ -240,7 +240,7 @@
   .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top: 6px; }
   .fire-btn{
     width: 86px; height: 86px; border-radius: 50%;
-    background: radial-gradient(circle at 32% 28%, #a9f5c1, var(--alice) 55%, #1c6a38 100%);
+    background: linear-gradient(180deg, var(--alice), #1c6a38);
     border: 3px solid #123821;
     box-shadow: 0 6px 0 #123821, 0 10px 18px rgba(47,158,86,.35);
     color:#fff; font-family: var(--font-display); font-weight:700; font-size: 13px; letter-spacing:.04em;
@@ -328,12 +328,12 @@
   }
   .detector-icon{
     width:20px; height:40px; background:var(--bg-panel-2); border:1px solid var(--line);
-    border-right:none; border-top-left-radius:40px; border-bottom-left-radius:40px;
+    border-left:none; border-top-right-radius:40px; border-bottom-right-radius:40px;
   }
   .beam-photon{
     position:absolute; top:50%; left:0; transform:translate(-50%,-50%);
     width:38px; height:38px; border-radius:50%;
-    background:#000; border:2px solid var(--beam);
+    background:#000;
     display:flex; align-items:center; justify-content:center;
     opacity:0; z-index:3;
     transition: left linear, opacity .2s linear;
@@ -428,21 +428,28 @@
   .stat .value{ font-family: var(--font-display); font-size: 22px; font-weight:700; }
   .stat.warn .value{ color: var(--eve-bright); }
   .stat.ok .value{ color: var(--beam); }
-  .sifted-key{
-    margin-top: 12px;
-    font-family: var(--font-mono);
-    font-size: 13px;
+  .key-table{ display:flex; flex-direction:column; gap:14px; margin-top:14px; }
+  .key-group{
     background: var(--bg-panel);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    display:flex;
-    align-items:flex-start;
+    padding: 6px 14px;
   }
-  .sifted-key .key-label{ flex: 0 0 58px; color: var(--text-faint); }
-  .sifted-key .key-bits{ flex:1; word-break: break-all; }
-  .sifted-key.alice-key .key-bits{ color: var(--alice-bright); }
-  .sifted-key.bob-key .key-bits{ color: var(--bob-bright); }
+  .key-row{
+    display:flex; align-items:flex-start; gap:14px;
+    padding: 8px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .key-row + .key-row{ border-top: 1px dashed var(--line-soft); }
+  .row-label{ flex: 0 0 64px; display:flex; flex-direction:column; line-height:1.3; padding-top:1px; }
+  .row-label .who{ font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+  .row-label .what{ font-size:10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.05em; }
+  .row-bits{ flex:1; word-break: break-all; padding-top:1px; }
+  .key-group.alice-key .who,
+  .key-group.alice-key .row-bits{ color: var(--alice-bright); }
+  .key-group.bob-key .who,
+  .key-group.bob-key .row-bits{ color: var(--bob-bright); }
   .alert-banner{
     margin-top:12px;
     border: 1px solid var(--eve);
@@ -638,18 +645,18 @@
           <label for="autoAlice">Alice's setting</label>
           <select id="autoAlice">
             <option value="RANDOM" selected>Random each qubit</option>
-            <option value="H">H (0°)</option>
-            <option value="D">+45° (22.5°)</option>
-            <option value="V">V (45°)</option>
-            <option value="A">−45° (67.5°)</option>
+            <option value="H">H (Z)</option>
+            <option value="D">+45° (X)</option>
+            <option value="V">V (Z)</option>
+            <option value="A">−45° (X)</option>
           </select>
         </div>
         <div class="field">
           <label for="autoBob">Bob's basis</label>
           <select id="autoBob">
             <option value="RANDOM" selected>Random each qubit</option>
-            <option value="HV">H / V (0°)</option>
-            <option value="DA">±45° (22.5°)</option>
+            <option value="HV">H / V (Z)</option>
+            <option value="DA">±45° (X)</option>
           </select>
         </div>
         <div class="field">
@@ -663,8 +670,8 @@
           <label for="autoEveBasis">Eve's basis</label>
           <select id="autoEveBasis" disabled>
             <option value="RANDOM" selected>Random each qubit</option>
-            <option value="HV">H / V (0°)</option>
-            <option value="DA">±45° (45°)</option>
+            <option value="HV">H / V (Z)</option>
+            <option value="DA">±45° (X)</option>
           </select>
         </div>
         <div class="field">
@@ -702,8 +709,18 @@
         <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
         <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
       </div>
-      <div class="sifted-key alice-key"><span class="key-label">Alice</span><span class="key-bits" id="aliceKeyBits">sifted key will appear here once bases are compared…</span></div>
-      <div class="sifted-key bob-key"><span class="key-label">Bob</span><span class="key-bits" id="bobKeyBits">sifted key will appear here once bases are compared…</span></div>
+      <div class="key-table">
+        <div class="key-group alice-key">
+          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Raw</span></div><div class="row-bits" id="aliceRawBits">no photons sent yet</div></div>
+          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Bases</span></div><div class="row-bits" id="aliceBasesBits">no photons sent yet</div></div>
+          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Sifted</span></div><div class="row-bits" id="aliceSiftedBits">no bases compared yet</div></div>
+        </div>
+        <div class="key-group bob-key">
+          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Raw</span></div><div class="row-bits" id="bobRawBits">no measurements yet</div></div>
+          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Bases</span></div><div class="row-bits" id="bobBasesBits">no measurements yet</div></div>
+          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Sifted</span></div><div class="row-bits" id="bobSiftedBits">no bases compared yet</div></div>
+        </div>
+      </div>
       <div class="alert-banner" id="eveAlert">⚠ Errors have appeared in the sifted key. In a real BB84 exchange this signals interference on the channel — possibly an eavesdropper — and Alice and Bob would discard this key rather than use it.</div>
     </div>
   </section>
@@ -757,20 +774,20 @@
 
   /* ---------------- physics model ---------------- */
   const ALICE_STATES = {
-    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (0°)',      symbol:'\u2192' },
-    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (22.5\u00B0)', symbol:'\u2197' },
-    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (45\u00B0)',       symbol:'\u2191' },
-    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'\u221245\u00B0 / A (67.5\u00B0)', symbol:'\u2198' }
+    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (Z)',      symbol:'\u2192' },
+    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (X)', symbol:'\u2197' },
+    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (Z)',       symbol:'\u2191' },
+    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'\u221245\u00B0 / A (X)', symbol:'\u2198' }
   };
   const ALICE_ORDER = ['H','D','V','A'];
 
   const BOB_BASES = {
-    HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
-    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (22.5\u00B0)' }
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (Z)' },
+    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (X)' }
   };
   const EVE_BASES = {
-    HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
-    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (45\u00B0)' }
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (Z)' },
+    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (X)' }
   };
 
   function randBit(){ return Math.random() < 0.5 ? 0 : 1; }
@@ -1057,21 +1074,6 @@
     });
   }
 
-  function playStreamSweep(totalMs, tinted){
-    const railW = beamRail.getBoundingClientRect().width;
-    const startX = TRAVEL_MARGIN;
-    const endX = Math.max(startX + 10, railW - TRAVEL_MARGIN);
-    beamArrow.style.transition = 'none';
-    beamArrow.style.left = startX + 'px';
-    beamGlyph.textContent = '\u2192';
-    beamGlyph.style.color = tinted ? 'var(--eve-bright)' : 'var(--beam)';
-    beamArrow.style.opacity = '1';
-    void beamArrow.offsetWidth;
-    beamArrow.style.transition = `left ${totalMs}ms linear, opacity .2s linear`;
-    requestAnimationFrame(() => { beamArrow.style.left = endX + 'px'; });
-    setTimeout(() => { beamArrow.style.opacity = '0'; }, totalMs + 60);
-  }
-
   /* ---------------- logging ---------------- */
   const aliceRowsEl = document.getElementById('aliceRows');
   const bobRowsEl = document.getElementById('bobRows');
@@ -1141,14 +1143,30 @@
       alertBox.classList.toggle('show', !perfect);
     }
 
-    const aliceBits = document.getElementById('aliceKeyBits');
-    const bobBits = document.getElementById('bobKeyBits');
-    if (matched.length === 0){
-      aliceBits.textContent = 'sifted key will appear here once bases are compared…';
-      bobBits.textContent = 'sifted key will appear here once bases are compared…';
+    const aliceRawEl = document.getElementById('aliceRawBits');
+    const aliceBasesEl = document.getElementById('aliceBasesBits');
+    const aliceSiftedEl = document.getElementById('aliceSiftedBits');
+    const bobRawEl = document.getElementById('bobRawBits');
+    const bobBasesEl = document.getElementById('bobBasesBits');
+    const bobSiftedEl = document.getElementById('bobSiftedBits');
+
+    if (sent === 0){
+      aliceRawEl.textContent = 'no photons sent yet';
+      aliceBasesEl.textContent = 'no photons sent yet';
+      bobRawEl.textContent = 'no measurements yet';
+      bobBasesEl.textContent = 'no measurements yet';
     } else {
-      aliceBits.textContent = matched.map(r => r.aliceBit).join('');
-      bobBits.textContent = matched.map(r => r.bobBit).join('');
+      aliceRawEl.textContent = state.log.map(r => r.aliceBit).join('');
+      aliceBasesEl.textContent = state.log.map(r => csvBasis(r.aliceBasis)).join('');
+      bobRawEl.textContent = state.log.map(r => r.bobBit).join('');
+      bobBasesEl.textContent = state.log.map(r => csvBasis(r.bobBasis)).join('');
+    }
+    if (matched.length === 0){
+      aliceSiftedEl.textContent = 'no bases compared yet';
+      bobSiftedEl.textContent = 'no bases compared yet';
+    } else {
+      aliceSiftedEl.textContent = matched.map(r => r.aliceBit).join('');
+      bobSiftedEl.textContent = matched.map(r => r.bobBit).join('');
     }
   }
 
@@ -1231,19 +1249,20 @@
     clearBobLed();
     clearEveLed();
 
+    // no per-photon beam animation here — at this speed it can't be read anyway.
+    // instead, the three dials flutter live to the settings actually used each round.
     const totalMs = Math.min(5000, 250 + count * 25);
-    playStreamSweep(totalMs, opts.eveEnabled);
-
     const startTime = performance.now();
     let processed = 0;
-    let lastResult = null;
 
     while (processed < count){
       const elapsed = performance.now() - startTime;
       const shouldHave = Math.min(count, Math.ceil((elapsed / totalMs) * count));
       while (processed < shouldHave){
         const result = sendOnePhoton(opts);
-        lastResult = result;
+        aliceDial.setKey(result.aliceKey);
+        bobDial.setKey(result.bobBasis);
+        if (result.eve) eveDial.setKey(result.eve.basis);
         addRecord({
           n: state.log.length + 1,
           aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
@@ -1254,12 +1273,6 @@
       }
       progressBar.style.width = ((processed / count) * 100).toFixed(1) + '%';
       if (processed < count) await new Promise(r => requestAnimationFrame(r));
-    }
-
-    if (lastResult){
-      aliceDial.setKey(lastResult.aliceKey);
-      bobDial.setKey(lastResult.bobBasis);
-      if (lastResult.eve) eveDial.setKey(lastResult.eve.basis);
     }
 
     autoStatus.textContent = `done — ${count} qubits exchanged`;
