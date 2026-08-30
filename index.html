@@ -236,6 +236,18 @@
 
   .station-note{ font-size:12px; color: var(--text-faint); text-align:center; margin: -6px 0 14px; min-height: 32px; }
 
+  .speed-toggle-wrap{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line-soft);
+    flex-wrap:wrap;
+  }
+  .speed-label{
+    font-family: var(--font-mono); font-size: 11px; text-transform:uppercase;
+    letter-spacing:.06em; color: var(--text-faint);
+  }
+  .speed-toggle-wrap .pill-row{ margin-bottom:0; }
+  .speed-toggle-wrap .pill.active{ background: var(--beam); border-color: var(--beam); color:#06210f; }
+
   /* Alice launch button */
   .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top: 6px; }
   .fire-btn{
@@ -446,10 +458,10 @@
   .row-label .who{ font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
   .row-label .what{ font-size:10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.05em; }
   .row-bits{ flex:1; word-break: break-all; padding-top:1px; }
-  .key-group.alice-key .who,
-  .key-group.alice-key .row-bits{ color: var(--alice-bright); }
-  .key-group.bob-key .who,
-  .key-group.bob-key .row-bits{ color: var(--bob-bright); }
+  .key-row.alice-row .who,
+  .key-row.alice-row .row-bits{ color: var(--alice-bright); }
+  .key-row.bob-row .who,
+  .key-row.bob-row .row-bits{ color: var(--bob-bright); }
   .alert-banner{
     margin-top:12px;
     border: 1px solid var(--eve);
@@ -611,6 +623,11 @@
         </div>
       </div>
     </div>
+
+    <div class="speed-toggle-wrap">
+      <span class="speed-label">Animation speed</span>
+      <div class="pill-row" id="speedPills"></div>
+    </div>
   </section>
 
   <!-- ============ BEAM RAIL ============ -->
@@ -645,10 +662,10 @@
           <label for="autoAlice">Alice's setting</label>
           <select id="autoAlice">
             <option value="RANDOM" selected>Random each qubit</option>
-            <option value="H">H (Z)</option>
-            <option value="D">+45° (X)</option>
-            <option value="V">V (Z)</option>
-            <option value="A">−45° (X)</option>
+            <option value="H">H (Z0)</option>
+            <option value="D">+45° (X0)</option>
+            <option value="V">V (Z1)</option>
+            <option value="A">−45° (X1)</option>
           </select>
         </div>
         <div class="field">
@@ -710,15 +727,13 @@
         <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
       </div>
       <div class="key-table">
-        <div class="key-group alice-key">
-          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Raw</span></div><div class="row-bits" id="aliceRawBits">no photons sent yet</div></div>
-          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Bases</span></div><div class="row-bits" id="aliceBasesBits">no photons sent yet</div></div>
-          <div class="key-row"><div class="row-label"><span class="who">Alice</span><span class="what">Sifted</span></div><div class="row-bits" id="aliceSiftedBits">no bases compared yet</div></div>
-        </div>
-        <div class="key-group bob-key">
-          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Raw</span></div><div class="row-bits" id="bobRawBits">no measurements yet</div></div>
-          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Bases</span></div><div class="row-bits" id="bobBasesBits">no measurements yet</div></div>
-          <div class="key-row"><div class="row-label"><span class="who">Bob</span><span class="what">Sifted</span></div><div class="row-bits" id="bobSiftedBits">no bases compared yet</div></div>
+        <div class="key-group">
+          <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Raw</span></div><div class="row-bits" id="aliceRawBits">no photons sent yet</div></div>
+          <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Bases</span></div><div class="row-bits" id="aliceBasesBits">no photons sent yet</div></div>
+          <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Raw</span></div><div class="row-bits" id="bobRawBits">no measurements yet</div></div>
+          <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Bases</span></div><div class="row-bits" id="bobBasesBits">no measurements yet</div></div>
+          <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Sifted</span></div><div class="row-bits" id="aliceSiftedBits">no bases compared yet</div></div>
+          <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Sifted</span></div><div class="row-bits" id="bobSiftedBits">no bases compared yet</div></div>
         </div>
       </div>
       <div class="alert-banner" id="eveAlert">⚠ Errors have appeared in the sifted key. In a real BB84 exchange this signals interference on the channel — possibly an eavesdropper — and Alice and Bob would discard this key rather than use it.</div>
@@ -774,10 +789,10 @@
 
   /* ---------------- physics model ---------------- */
   const ALICE_STATES = {
-    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (Z)',      symbol:'\u2192' },
-    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (X)', symbol:'\u2197' },
-    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (Z)',       symbol:'\u2191' },
-    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'\u221245\u00B0 / A (X)', symbol:'\u2198' }
+    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (Z0)',      symbol:'\u2192' },
+    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (X0)', symbol:'\u2197' },
+    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (Z1)',       symbol:'\u2191' },
+    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'\u221245\u00B0 / A (X1)', symbol:'\u2198' }
   };
   const ALICE_ORDER = ['H','D','V','A'];
 
@@ -910,6 +925,7 @@
     aliceRandom: false,
     bobRandom: false,
     eveRandom: false,
+    speedFactor: 1,
     log: [],
     running: false
   };
@@ -969,6 +985,14 @@
     else { state.eveRandom = false; state.eveBasis = key; eveDial.setKey(key); }
     refreshAll();
   });
+
+  const speedPills = buildPills(document.getElementById('speedPills'), [
+    { key:'SLOW', label:'Slow' }, { key:'MEDIUM', label:'Medium' }, { key:'FAST', label:'Fast' }
+  ], (key) => {
+    state.speedFactor = key === 'FAST' ? 2 : (key === 'SLOW' ? 0.5 : 1);
+    speedPills.refresh(key);
+  });
+  speedPills.refresh('MEDIUM');
 
   function refreshAll(){
     alicePills.refresh(state.aliceRandom ? 'RANDOM' : state.aliceKey);
@@ -1196,7 +1220,7 @@
     if (state.bobRandom) noteRandomBob(result.bobBasis);
     if (state.eveEnabled && state.eveRandom && result.eve) noteRandomEve(result.eve.basis);
 
-    await playSinglePhoton(result, 1000);
+    await playSinglePhoton(result, 1000 / state.speedFactor);
 
     addRecord({
       n: state.log.length + 1,
@@ -1251,7 +1275,7 @@
 
     // no per-photon beam animation here — at this speed it can't be read anyway.
     // instead, the three dials flutter live to the settings actually used each round.
-    const totalMs = Math.min(5000, 250 + count * 25);
+    const totalMs = Math.min(5000, 250 + count * 25) / state.speedFactor;
     const startTime = performance.now();
     let processed = 0;
 
