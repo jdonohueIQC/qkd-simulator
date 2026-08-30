@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own QKD — Digital Optics Bench</title>
+<meta name="description" content="An on-screen simulator of the IQC Build-Your-Own Quantum Key Distribution kit: polarization states, measurement bases, an optional eavesdropper, and BB84 key exchange.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0f;
+    --bg-raised: #131319;
+    --bg-panel: #17171f;
+    --bg-panel-2: #1d1d27;
+    --line: #2b2b38;
+    --line-soft: #202029;
+    --text: #eeecf5;
+    --text-dim: #9c99ac;
+    --text-faint: #6b687c;
+
+    --maroon: #9e1b34;
+    --maroon-bright: #c6273f;
+    --gold: #ffc72c;
+
+    --alice: #8a5cd6;
+    --alice-dim: #4a3670;
+    --bob: #4f7cf0;
+    --bob-dim: #2c3d70;
+    --eve: #c6273f;
+    --eve-dim: #5c2230;
+
+    --beam: #7dffb0;
+    --beam-glow: rgba(125,255,176,.55);
+
+    --led0: #33e6c8;
+    --led1: #ffab2e;
+
+    --radius: 14px;
+    --radius-sm: 8px;
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ color-scheme: dark; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(138,92,214,.10), transparent 55%),
+      radial-gradient(1100px 650px at 90% 0%, rgba(79,124,240,.10), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height:1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; }
+  button{ font-family: inherit; }
+  ::selection{ background: var(--alice); color: #fff; }
+
+  :focus-visible{
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 22px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .brand{ display:flex; align-items:center; gap:16px; }
+  .brand img{ height: 34px; width:auto; display:block; filter: drop-shadow(0 0 0 transparent); }
+  .brand .divider{ width:1px; height: 30px; background: var(--line); }
+  .titleblock .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--beam);
+    margin: 0 0 4px;
+  }
+  .titleblock h1{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(20px, 2.4vw, 28px);
+    margin:0;
+    letter-spacing: -0.01em;
+  }
+  .topbar-meta{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    text-align:right;
+    max-width: 280px;
+  }
+
+  section.block{ margin-bottom: 34px; }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .section-head .num{
+    font-family: var(--font-mono);
+    color: var(--beam);
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    padding: 2px 8px;
+  }
+  .section-head h2{
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin:0;
+    color: var(--text-dim);
+    font-weight:600;
+  }
+
+  /* ---------- Bench ---------- */
+  .bench-wrap{ position:relative; }
+  .beam-track{
+    position:absolute;
+    left: 0; right:0;
+    top: 108px;
+    height: 2px;
+    background-image: repeating-linear-gradient(to right, var(--beam) 0 10px, transparent 10px 20px);
+    opacity:.35;
+    z-index:0;
+    pointer-events:none;
+  }
+  .beam-pulse{
+    position:absolute;
+    top: 102px;
+    width: 14px; height:14px;
+    border-radius: 50%;
+    background: var(--beam);
+    box-shadow: 0 0 14px 4px var(--beam-glow);
+    left: 0;
+    opacity: 0;
+    z-index: 1;
+    pointer-events:none;
+    transition: left .85s linear, opacity .15s linear, background .2s linear, box-shadow .2s linear;
+  }
+  .beam-pulse.intercepted{ background: var(--eve); box-shadow: 0 0 16px 5px rgba(198,39,63,.55); }
+
+  .bench{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns: 1.15fr 0.85fr 1.15fr;
+    gap: 18px;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .bench{ grid-template-columns: 1fr; }
+    .beam-track, .beam-pulse{ display:none; }
+  }
+
+  .station{
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg-raised));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .station::before{
+    content:"";
+    position:absolute; inset:0 0 auto 0; height:3px;
+  }
+  .station.alice::before{ background: var(--alice); }
+  .station.bob::before{ background: var(--bob); }
+  .station.eve::before{ background: var(--eve); }
+
+  .station-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 14px;
+  }
+  .station-name{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: 18px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .station.alice .station-name{ color: #cdb4ff; }
+  .station.bob .station-name{ color: #b7c9ff; }
+  .station.eve .station-name{ color: #ff9fb0; }
+  .station-role{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  /* toggle switch */
+  .switch{ display:inline-flex; align-items:center; gap:8px; font-family: var(--font-mono); font-size:11px; color: var(--text-dim); cursor:pointer; user-select:none; }
+  .switch input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .switch .track{
+    width:36px; height:20px; border-radius: 100px; background: var(--bg-panel-2);
+    border: 1px solid var(--line); position:relative; transition: background .2s, border-color .2s;
+  }
+  .switch .knob{
+    position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%;
+    background: var(--text-faint); transition: transform .2s, background .2s;
+  }
+  .switch input:checked + .track{ background: var(--eve-dim); border-color: var(--eve); }
+  .switch input:checked + .track .knob{ transform: translateX(16px); background: var(--eve); }
+  .switch input:focus-visible + .track{ outline: 2px solid var(--gold); outline-offset:2px; }
+
+  /* dial */
+  .dial-wrap{ display:flex; justify-content:center; margin: 4px 0 6px; }
+  .dial-svg{ width: 190px; height: 128px; overflow:visible; }
+  .dial-arc{ fill:none; stroke: var(--line); stroke-width:2; }
+  .dial-tick{ fill: var(--bg-panel-2); stroke: var(--line); stroke-width:1.5; cursor:pointer; transition: fill .2s, stroke .2s; }
+  .station.alice .dial-tick.active{ fill: var(--alice); stroke: var(--alice); }
+  .station.bob .dial-tick.active{ fill: var(--bob); stroke: var(--bob); }
+  .station.eve .dial-tick.active{ fill: var(--eve); stroke: var(--eve); }
+  .dial-label{ fill: var(--text-faint); font-family: var(--font-mono); font-size: 12px; cursor:pointer; transition: fill .2s; }
+  .dial-label.active{ fill: var(--text); font-weight:600; }
+  .dial-needle line{ stroke: var(--gold); stroke-width: 3; stroke-linecap: round; }
+  .dial-needle{ transition: transform .45s cubic-bezier(.2,.9,.25,1.2); }
+  .dial-hub{ fill: var(--bg-raised); stroke: var(--gold); stroke-width:2; }
+
+  .pill-row{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom: 14px; }
+  .pill{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 100px;
+    border: 1px solid var(--line);
+    background: var(--bg-panel-2);
+    color: var(--text-dim);
+    cursor:pointer;
+    transition: all .15s;
+  }
+  .pill:hover{ border-color: var(--text-faint); color: var(--text); }
+  .station.alice .pill.active{ background: var(--alice); border-color: var(--alice); color:#fff; }
+  .station.bob .pill.active{ background: var(--bob); border-color: var(--bob); color:#fff; }
+  .station.eve .pill.active{ background: var(--eve); border-color: var(--eve); color:#fff; }
+  .pill.rand{ display:inline-flex; align-items:center; gap:5px; }
+
+  .station-note{ font-size:12px; color: var(--text-faint); text-align:center; margin: -6px 0 14px; }
+
+  /* Alice launch button */
+  .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top: 6px; }
+  .fire-btn{
+    width: 86px; height: 86px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #ff5b6e, var(--maroon-bright) 55%, var(--maroon) 100%);
+    border: 3px solid #5c0f1c;
+    box-shadow: 0 6px 0 #5c0f1c, 0 10px 18px rgba(198,39,63,.35);
+    color:#fff; font-family: var(--font-display); font-weight:700; font-size: 13px; letter-spacing:.04em;
+    cursor:pointer;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .fire-btn:hover{ filter:brightness(1.06); }
+  .fire-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 #5c0f1c, 0 4px 10px rgba(198,39,63,.35); }
+  .fire-btn:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; transform:none; }
+  .fire-hint{ font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.08em; }
+
+  /* Bob detector */
+  .detector{
+    background: var(--bg-panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    display:flex;
+    justify-content:center;
+    gap: 22px;
+    margin-top: 4px;
+  }
+  .led{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .led .bulb{
+    width: 46px; height:46px; border-radius:50%;
+    background: #0e0e14;
+    border: 2px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-mono); font-weight:700; font-size: 18px; color: var(--text-faint);
+    transition: all .15s;
+  }
+  .led .bulb.lit-0{ background: var(--led0); color:#04211d; border-color: var(--led0); box-shadow: 0 0 18px 4px rgba(51,230,200,.55); }
+  .led .bulb.lit-1{ background: var(--led1); color:#2b1600; border-color: var(--led1); box-shadow: 0 0 18px 4px rgba(255,171,46,.55); }
+  .led .cap{ font-family: var(--font-mono); font-size:10px; color: var(--text-faint); text-transform:uppercase; }
+
+  /* Eve empty state */
+  .eve-off{
+    text-align:center;
+    padding: 30px 6px;
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+  .eve-off .dash-box{
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+    padding: 22px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing:.05em;
+  }
+
+  /* ---------- Automation ---------- */
+  .console{
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .console-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .field label{
+    display:block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+  }
+  .field select, .field input[type="number"]{
+    width:100%;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 9px 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .field select:disabled, .field input:disabled{ opacity:.4; }
+  .range-row{ display:flex; align-items:center; gap:10px; }
+  .range-row input[type=range]{ flex:1; accent-color: var(--eve); }
+  .range-val{ font-family: var(--font-mono); font-size:12px; width:38px; text-align:right; color: var(--text-dim); }
+
+  .console-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .btn{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing:.04em;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--bg-panel-2);
+    color: var(--text);
+    cursor:pointer;
+    transition: all .15s;
+  }
+  .btn:hover{ border-color: var(--text-faint); }
+  .btn.primary{ background: var(--beam); border-color: var(--beam); color: #06210f; font-weight:700; }
+  .btn.primary:hover{ filter:brightness(1.05); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.ghost{ background:transparent; }
+
+  .progress{
+    flex:1;
+    min-width: 160px;
+    height: 8px;
+    border-radius: 100px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--line);
+    overflow:hidden;
+  }
+  .progress > i{ display:block; height:100%; width:0%; background: var(--beam); transition: width .1s linear; }
+  .console-status{ font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+
+  /* ---------- Analysis ---------- */
+  .analysis-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap: 14px;
+  }
+  .stat{
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+  .stat .label{ font-family: var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:6px; }
+  .stat .value{ font-family: var(--font-display); font-size: 22px; font-weight:700; }
+  .stat.warn .value{ color: var(--eve); }
+  .stat.ok .value{ color: var(--beam); }
+  .sifted-key{
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    word-break: break-all;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    color: var(--beam);
+  }
+  .alert-banner{
+    margin-top:12px;
+    border: 1px solid var(--eve);
+    background: var(--eve-dim);
+    color: #ffd7dd;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    display:none;
+  }
+  .alert-banner.show{ display:block; }
+
+  /* ---------- Logs ---------- */
+  .logs-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 720px){ .logs-grid{ grid-template-columns: 1fr; } }
+  .terminal{
+    background: #0d0d13;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .terminal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 14px;
+    background: var(--bg-panel-2);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .terminal-body{ max-height: 260px; overflow-y:auto; }
+  table.logtable{ width:100%; border-collapse:collapse; font-family: var(--font-mono); font-size: 12.5px; }
+  table.logtable th{
+    position:sticky; top:0;
+    background:#0d0d13;
+    text-align:left;
+    padding: 8px 14px;
+    color: var(--text-faint);
+    border-bottom: 1px solid var(--line-soft);
+    font-weight:500;
+  }
+  table.logtable td{ padding: 6px 14px; border-bottom: 1px solid #17171e; color: var(--text-dim); }
+  table.logtable tr.match td{ color: var(--text); }
+  .bitchip{ display:inline-block; min-width:16px; text-align:center; padding:1px 6px; border-radius:4px; font-weight:700; }
+  .bitchip.b0{ background: rgba(51,230,200,.15); color: var(--led0); }
+  .bitchip.b1{ background: rgba(255,171,46,.15); color: var(--led1); }
+  .empty-row td{ color: var(--text-faint); font-style:italic; text-align:center; padding: 18px; }
+  .terminal-foot{ padding: 10px 14px; border-top: 1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+
+  footer{
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 12px;
+    color: var(--text-faint);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap: 10px;
+  }
+  footer a{ color: var(--text-dim); text-decoration: underline dotted; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="University of Waterloo — Institute for Quantum Computing">
+      <div class="divider"></div>
+      <div class="titleblock">
+        <p class="eyebrow">Digital optics bench</p>
+        <h1>Build Your Own QKD — Simulator</h1>
+      </div>
+    </div>
+    <div class="topbar-meta">BB84 polarization protocol<br>modelled on the IQC hands-on kit</div>
+  </header>
+
+  <!-- ============ BENCH ============ -->
+  <section class="block">
+    <div class="section-head"><span class="num">01</span><h2>The optics bench — manual exchange</h2></div>
+
+    <div class="bench-wrap">
+      <div class="beam-track"></div>
+      <div class="beam-pulse" id="beamPulse"></div>
+
+      <div class="bench">
+        <!-- ALICE -->
+        <div class="station alice">
+          <div class="station-head">
+            <div>
+              <div class="station-name">Alice</div>
+              <div class="station-role">Laser · half-wave plate</div>
+            </div>
+          </div>
+
+          <div class="dial-wrap"><div id="aliceDial"></div></div>
+          <div class="pill-row" id="alicePills"></div>
+          <div class="station-note" id="aliceNote">Sending <strong>H</strong> · basis H/V</div>
+
+          <div class="fire-btn-wrap">
+            <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
+            <span class="fire-hint">pulse switch</span>
+          </div>
+        </div>
+
+        <!-- EVE -->
+        <div class="station eve">
+          <div class="station-head">
+            <div>
+              <div class="station-name">Eve?</div>
+              <div class="station-role">Quarter-wave plate</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="eveToggle">
+              <span class="track"><span class="knob"></span></span>
+            </label>
+          </div>
+
+          <div id="eveOnBlock" style="display:none;">
+            <div class="dial-wrap"><div id="eveDial"></div></div>
+            <div class="pill-row" id="evePills"></div>
+            <div class="station-note" id="eveNote">Measuring in H/V</div>
+          </div>
+          <div id="eveOffBlock" class="eve-off">
+            <div class="dash-box">no eavesdropper<br>on the channel</div>
+          </div>
+        </div>
+
+        <!-- BOB -->
+        <div class="station bob">
+          <div class="station-head">
+            <div>
+              <div class="station-name">Bob</div>
+              <div class="station-role">Half-wave plate · detectors</div>
+            </div>
+          </div>
+
+          <div class="dial-wrap"><div id="bobDial"></div></div>
+          <div class="pill-row" id="bobPills"></div>
+          <div class="station-note" id="bobNote">Measuring in H/V</div>
+
+          <div class="detector">
+            <div class="led">
+              <div class="bulb" id="led0">0</div>
+              <span class="cap">transmitted</span>
+            </div>
+            <div class="led">
+              <div class="bulb" id="led1">1</div>
+              <span class="cap">reflected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AUTOMATION ============ -->
+  <section class="block">
+    <div class="section-head"><span class="num">02</span><h2>Automated key exchange</h2></div>
+    <div class="console">
+      <div class="console-grid">
+        <div class="field">
+          <label for="autoCount">Qubits to send</label>
+          <input type="number" id="autoCount" value="40" min="1" max="5000">
+        </div>
+        <div class="field">
+          <label for="autoAlice">Alice's setting</label>
+          <select id="autoAlice">
+            <option value="RANDOM" selected>Random each qubit</option>
+            <option value="H">H (0°)</option>
+            <option value="D">+45° (22.5°)</option>
+            <option value="V">V (45°)</option>
+            <option value="A">−45° (67.5°)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="autoBob">Bob's basis</label>
+          <select id="autoBob">
+            <option value="RANDOM" selected>Random each qubit</option>
+            <option value="HV">H / V (0°)</option>
+            <option value="DA">±45° (22.5°)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="autoEveEnable">Eavesdropper</label>
+          <select id="autoEveEnable">
+            <option value="off" selected>Not present</option>
+            <option value="on">Present</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="autoEveBasis">Eve's basis</label>
+          <select id="autoEveBasis" disabled>
+            <option value="RANDOM" selected>Random each qubit</option>
+            <option value="HV">H / V (0°)</option>
+            <option value="DA">±45° (45°)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="autoEveProb">Intercept probability</label>
+          <div class="range-row">
+            <input type="range" id="autoEveProb" min="0" max="100" value="100" disabled>
+            <span class="range-val" id="autoEveProbVal">100%</span>
+          </div>
+        </div>
+      </div>
+      <div class="console-actions">
+        <button class="btn primary" id="runAuto">▶ Run sequence</button>
+        <button class="btn ghost" id="clearLog">Clear log</button>
+        <div class="progress"><i id="autoProgress"></i></div>
+        <span class="console-status" id="autoStatus">idle</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ANALYSIS ============ -->
+  <section class="block">
+    <div class="section-head"><span class="num">03</span><h2>Sifted key &amp; error check</h2></div>
+    <div class="analysis-grid">
+      <div class="stat"><div class="label">Photons sent</div><div class="value" id="statSent">0</div></div>
+      <div class="stat"><div class="label">Bases matched</div><div class="value" id="statMatched">0</div></div>
+      <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
+      <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
+    </div>
+    <div class="sifted-key" id="siftedKeyBox">Sifted key will appear here once Alice and Bob compare bases…</div>
+    <div class="alert-banner" id="eveAlert">⚠ Error rate is high enough to suggest an eavesdropper on the channel — in a real BB84 exchange, Alice and Bob would discard this key.</div>
+  </section>
+
+  <!-- ============ LOGS ============ -->
+  <section class="block">
+    <div class="section-head"><span class="num">04</span><h2>Session logs</h2></div>
+    <div class="logs-grid">
+      <div class="terminal">
+        <div class="terminal-head"><span>Alice — serial monitor</span><span id="aliceCount">0 rows</span></div>
+        <div class="terminal-body">
+          <table class="logtable">
+            <thead><tr><th>n</th><th>basis</th><th>bit sent</th></tr></thead>
+            <tbody id="aliceRows"><tr class="empty-row"><td colspan="3">no photons sent yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="terminal-foot">
+          <span class="console-status">alice_log.csv</span>
+          <button class="btn" id="dlAlice" disabled>⭳ Download CSV</button>
+        </div>
+      </div>
+      <div class="terminal">
+        <div class="terminal-head"><span>Bob — serial monitor</span><span id="bobCount">0 rows</span></div>
+        <div class="terminal-body">
+          <table class="logtable">
+            <thead><tr><th>n</th><th>basis</th><th>bit measured</th></tr></thead>
+            <tbody id="bobRows"><tr class="empty-row"><td colspan="3">no measurements yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="terminal-foot">
+          <span class="console-status">bob_log.csv</span>
+          <button class="btn" id="dlBob" disabled>⭳ Download CSV</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Modelled on <em>Build Your Own Quantum Key Distribution</em>, IQC Scientific Outreach, University of Waterloo.</span>
+    <span>Digital simulator · not for cryptographic use</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- physics model ---------------- */
+  // Alice's four preparable states, angles match the kit's HWP mount (0°, 22.5°, 45°, 67.5°)
+  const ALICE_STATES = {
+    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (0°)' },
+    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45° / D (22.5°)' },
+    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (45°)' },
+    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'−45° / A (67.5°)' }
+  };
+  const ALICE_ORDER = ['H','D','V','A'];
+
+  // Bob's two measurement bases (his HWP has only two settings: 0° and 22.5°)
+  const BOB_BASES = {
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (0°)' },
+    DA: { angle: 30, label:'±45°', full:'±45° basis (22.5°)' }
+  };
+  // Eve's two "measurement" bases via her quarter-wave plate (labelled 0° and 45° on the kit)
+  const EVE_BASES = {
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (0°)' },
+    DA: { angle: 30, label:'±45°', full:'±45° basis (45°)' }
+  };
+
+  function randBit(){ return Math.random() < 0.5 ? 0 : 1; }
+  function pickAliceKey(setting){
+    if (setting === 'RANDOM') return ALICE_ORDER[Math.floor(Math.random()*4)];
+    return setting;
+  }
+  function pickBasis(setting){
+    if (setting === 'RANDOM') return Math.random() < 0.5 ? 'HV' : 'DA';
+    return setting;
+  }
+
+  // Simulates one photon travelling Alice -> (Eve?) -> Bob.
+  function sendOnePhoton(opts){
+    const aliceKey = pickAliceKey(opts.aliceSetting);
+    const alice = ALICE_STATES[aliceKey];
+
+    let effBasis = alice.basis;
+    let effBit = alice.bit;
+    let eve = null;
+
+    if (opts.eveEnabled && Math.random()*100 < opts.eveProbability) {
+      const eveBasis = pickBasis(opts.eveBasisSetting);
+      let eveBit;
+      if (eveBasis === alice.basis) {
+        eveBit = alice.bit; // Eve happens to measure in the same basis: no disturbance
+      } else {
+        eveBit = randBit(); // wrong basis: outcome (and re-sent state) is random
+      }
+      eve = { basis: eveBasis, bit: eveBit };
+      effBasis = eveBasis;
+      effBit = eveBit;
+    }
+
+    const bobBasis = pickBasis(opts.bobSetting);
+    let bobBit;
+    if (bobBasis === effBasis) bobBit = effBit;
+    else bobBit = randBit();
+
+    return {
+      aliceKey, aliceBasis: alice.basis, aliceBit: alice.bit,
+      eve, bobBasis, bobBit
+    };
+  }
+
+  /* ---------------- dial widget ---------------- */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function buildDial(container, ticks){
+    container.innerHTML = '';
+    const w = 190, h = 128, cx = 95, cy = 116, r = 82, tickR = 66, labelR = 100;
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('class', 'dial-svg');
+
+    function pt(angleDeg, radius){
+      const rad = angleDeg * Math.PI / 180;
+      return [cx + radius*Math.sin(rad), cy - radius*Math.cos(rad)];
+    }
+
+    const minA = ticks[0].angle, maxA = ticks[ticks.length-1].angle;
+    const [x1,y1] = pt(minA, r), [x2,y2] = pt(maxA, r);
+    const arc = document.createElementNS(SVGNS, 'path');
+    arc.setAttribute('d', `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`);
+    arc.setAttribute('class', 'dial-arc');
+    svg.appendChild(arc);
+
+    const needle = document.createElementNS(SVGNS, 'g');
+    needle.setAttribute('class', 'dial-needle');
+    needle.style.transformOrigin = cx + 'px ' + cy + 'px';
+    const nline = document.createElementNS(SVGNS, 'line');
+    nline.setAttribute('x1', cx); nline.setAttribute('y1', cy);
+    nline.setAttribute('x2', cx); nline.setAttribute('y2', cy - r + 14);
+    needle.appendChild(nline);
+
+    const tickEls = {}, labelEls = {};
+    ticks.forEach(t => {
+      const [tx,ty] = pt(t.angle, tickR);
+      const [lx,ly] = pt(t.angle, labelR);
+      const tick = document.createElementNS(SVGNS, 'circle');
+      tick.setAttribute('cx', tx); tick.setAttribute('cy', ty); tick.setAttribute('r', 5);
+      tick.setAttribute('class', 'dial-tick');
+      svg.appendChild(tick);
+      tickEls[t.key] = tick;
+
+      const label = document.createElementNS(SVGNS, 'text');
+      label.setAttribute('x', lx); label.setAttribute('y', ly);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('dominant-baseline', 'middle');
+      label.setAttribute('class', 'dial-label');
+      label.textContent = t.label;
+      svg.appendChild(label);
+      labelEls[t.key] = label;
+    });
+
+    const hub = document.createElementNS(SVGNS, 'circle');
+    hub.setAttribute('cx', cx); hub.setAttribute('cy', cy); hub.setAttribute('r', 6);
+    hub.setAttribute('class', 'dial-hub');
+
+    svg.appendChild(hub);
+    svg.appendChild(needle);
+    container.appendChild(svg);
+
+    return {
+      setKey(key){
+        const t = ticks.find(t => t.key === key);
+        if (!t) return;
+        needle.style.transform = `rotate(${t.angle}deg)`;
+        Object.keys(tickEls).forEach(k => tickEls[k].classList.toggle('active', k === key));
+        Object.keys(labelEls).forEach(k => labelEls[k].classList.toggle('active', k === key));
+      }
+    };
+  }
+
+  /* ---------------- app state ---------------- */
+  const state = {
+    aliceKey: 'H',
+    bobBasis: 'HV',
+    eveEnabled: false,
+    eveBasis: 'HV',
+    aliceRandom: false,
+    bobRandom: false,
+    eveRandom: false,
+    log: [], // {n, aliceBasis, aliceBit, eveIntercepted, bobBasis, bobBit}
+    running: false
+  };
+
+  const aliceDial = buildDial(document.getElementById('aliceDial'),
+    ALICE_ORDER.map(k => ({ key:k, angle: ALICE_STATES[k].angle, label: ALICE_STATES[k].label })));
+  const bobDial = buildDial(document.getElementById('bobDial'),
+    ['HV','DA'].map(k => ({ key:k, angle: BOB_BASES[k].angle, label: BOB_BASES[k].label })));
+  const eveDial = buildDial(document.getElementById('eveDial'),
+    ['HV','DA'].map(k => ({ key:k, angle: EVE_BASES[k].angle, label: EVE_BASES[k].label })));
+
+  aliceDial.setKey('H');
+  bobDial.setKey('HV');
+  eveDial.setKey('HV');
+
+  /* ---- pill rows ---- */
+  function buildPills(container, options, onPick, getActive){
+    container.innerHTML = '';
+    options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'pill' + (opt.rand ? ' rand' : '');
+      b.type = 'button';
+      b.textContent = opt.label;
+      b.addEventListener('click', () => onPick(opt.key));
+      container.appendChild(b);
+    });
+    return {
+      refresh(){
+        const activeKey = getActive();
+        [...container.children].forEach((el, i) => {
+          el.classList.toggle('active', options[i].key === activeKey);
+        });
+      }
+    };
+  }
+
+  const alicePills = buildPills(document.getElementById('alicePills'), [
+    { key:'H', label:'H' }, { key:'D', label:'+45°' }, { key:'V', label:'V' },
+    { key:'A', label:'−45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
+  ], (key) => {
+    if (key === 'RANDOM'){ state.aliceRandom = true; }
+    else { state.aliceRandom = false; state.aliceKey = key; aliceDial.setKey(key); }
+    refreshAll();
+  }, () => state.aliceRandom ? 'RANDOM' : state.aliceKey);
+
+  const bobPills = buildPills(document.getElementById('bobPills'), [
+    { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
+  ], (key) => {
+    if (key === 'RANDOM'){ state.bobRandom = true; }
+    else { state.bobRandom = false; state.bobBasis = key; bobDial.setKey(key); }
+    refreshAll();
+  }, () => state.bobRandom ? 'RANDOM' : state.bobBasis);
+
+  const evePills = buildPills(document.getElementById('evePills'), [
+    { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
+  ], (key) => {
+    if (key === 'RANDOM'){ state.eveRandom = true; }
+    else { state.eveRandom = false; state.eveBasis = key; eveDial.setKey(key); }
+    refreshAll();
+  }, () => state.eveRandom ? 'RANDOM' : state.eveBasis);
+
+  function refreshAll(){
+    alicePills.refresh(); bobPills.refresh(); evePills.refresh();
+    document.getElementById('aliceNote').innerHTML = state.aliceRandom
+      ? 'Sending a <strong>random state</strong> each pulse'
+      : `Sending <strong>${ALICE_STATES[state.aliceKey].label}</strong> · ${ALICE_STATES[state.aliceKey].full}`;
+    document.getElementById('bobNote').innerHTML = state.bobRandom
+      ? 'Measuring in a <strong>random basis</strong> each time'
+      : `Measuring in <strong>${BOB_BASES[state.bobBasis].label}</strong> · ${BOB_BASES[state.bobBasis].full}`;
+    document.getElementById('eveNote').innerHTML = state.eveRandom
+      ? 'Measuring in a <strong>random basis</strong> each time'
+      : `Measuring in <strong>${EVE_BASES[state.eveBasis].label}</strong> · ${EVE_BASES[state.eveBasis].full}`;
+  }
+  refreshAll();
+
+  /* ---- eve toggle ---- */
+  const eveToggle = document.getElementById('eveToggle');
+  const eveOnBlock = document.getElementById('eveOnBlock');
+  const eveOffBlock = document.getElementById('eveOffBlock');
+  eveToggle.addEventListener('change', () => {
+    state.eveEnabled = eveToggle.checked;
+    eveOnBlock.style.display = state.eveEnabled ? 'block' : 'none';
+    eveOffBlock.style.display = state.eveEnabled ? 'none' : 'block';
+  });
+
+  /* ---------------- beam animation ---------------- */
+  const pulse = document.getElementById('beamPulse');
+  const bench = document.querySelector('.bench');
+  function animateBeam(intercepted){
+    return new Promise(resolve => {
+      const rect = bench.getBoundingClientRect();
+      const wrapRect = document.querySelector('.bench-wrap').getBoundingClientRect();
+      const startX = 0, endX = rect.width - 14;
+      pulse.classList.remove('intercepted');
+      pulse.style.transition = 'none';
+      pulse.style.left = startX + 'px';
+      pulse.style.opacity = '1';
+      // force reflow so the next transition actually animates
+      void pulse.offsetWidth;
+      pulse.style.transition = 'left .85s linear, opacity .15s linear, background .2s linear';
+      requestAnimationFrame(() => {
+        if (intercepted) {
+          setTimeout(() => pulse.classList.add('intercepted'), 380);
+        }
+        pulse.style.left = endX + 'px';
+      });
+      setTimeout(() => { pulse.style.opacity = '0'; resolve(); }, 900);
+    });
+  }
+
+  /* ---------------- logging & LEDs ---------------- */
+  const aliceRowsEl = document.getElementById('aliceRows');
+  const bobRowsEl = document.getElementById('bobRows');
+  const led0 = document.getElementById('led0');
+  const led1 = document.getElementById('led1');
+
+  function basisLabel(b){ return b === 'HV' ? 'H/V' : '±45°'; }
+
+  function litLed(bit){
+    led0.classList.remove('lit-0');
+    led1.classList.remove('lit-1');
+    if (bit === 0) led0.classList.add('lit-0');
+    else led1.classList.add('lit-1');
+  }
+
+  function addRecord(rec){
+    state.log.push(rec);
+    renderLastRow(rec);
+    litLed(rec.bobBit);
+    updateAnalysis();
+    updateCounts();
+  }
+
+  function renderLastRow(rec){
+    if (aliceRowsEl.querySelector('.empty-row')) aliceRowsEl.innerHTML = '';
+    if (bobRowsEl.querySelector('.empty-row')) bobRowsEl.innerHTML = '';
+    const match = rec.aliceBasis === rec.bobBasis;
+
+    const ar = document.createElement('tr');
+    if (match) ar.className = 'match';
+    ar.innerHTML = `<td>${rec.n}</td><td>${basisLabel(rec.aliceBasis)}</td><td><span class="bitchip b${rec.aliceBit}">${rec.aliceBit}</span></td>`;
+    aliceRowsEl.appendChild(ar);
+
+    const br = document.createElement('tr');
+    if (match) br.className = 'match';
+    br.innerHTML = `<td>${rec.n}</td><td>${basisLabel(rec.bobBasis)}</td><td><span class="bitchip b${rec.bobBit}">${rec.bobBit}</span></td>`;
+    bobRowsEl.appendChild(br);
+
+    const aliceBody = aliceRowsEl.parentElement.parentElement;
+    const bobBody = bobRowsEl.parentElement.parentElement;
+    aliceBody.scrollTop = aliceBody.scrollHeight;
+    bobBody.scrollTop = bobBody.scrollHeight;
+  }
+
+  function updateCounts(){
+    document.getElementById('aliceCount').textContent = state.log.length + ' rows';
+    document.getElementById('bobCount').textContent = state.log.length + ' rows';
+    document.getElementById('dlAlice').disabled = state.log.length === 0;
+    document.getElementById('dlBob').disabled = state.log.length === 0;
+  }
+
+  function updateAnalysis(){
+    const sent = state.log.length;
+    const matched = state.log.filter(r => r.aliceBasis === r.bobBasis);
+    const errors = matched.filter(r => r.aliceBit !== r.bobBit);
+    document.getElementById('statSent').textContent = sent;
+    document.getElementById('statMatched').textContent = matched.length;
+    document.getElementById('statSifted').textContent = matched.length;
+
+    const errCard = document.getElementById('statErrCard');
+    const errEl = document.getElementById('statError');
+    const alertBox = document.getElementById('eveAlert');
+    if (matched.length === 0){
+      errEl.textContent = '—';
+      errCard.classList.remove('warn','ok');
+      alertBox.classList.remove('show');
+    } else {
+      const rate = errors.length / matched.length;
+      errEl.textContent = (rate*100).toFixed(1) + '%';
+      const high = rate > 0.11; // BB84 rule-of-thumb QBER threshold
+      errCard.classList.toggle('warn', high);
+      errCard.classList.toggle('ok', !high);
+      alertBox.classList.toggle('show', high);
+    }
+
+    const keyBox = document.getElementById('siftedKeyBox');
+    if (matched.length === 0){
+      keyBox.textContent = 'Sifted key will appear here once Alice and Bob compare bases…';
+    } else {
+      keyBox.textContent = 'Bob\u2019s sifted key: ' + matched.map(r => r.bobBit).join('');
+    }
+  }
+
+  /* ---------------- manual send ---------------- */
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.addEventListener('click', async () => {
+    if (state.running) return;
+    sendBtn.disabled = true;
+    const opts = {
+      aliceSetting: state.aliceRandom ? 'RANDOM' : state.aliceKey,
+      bobSetting: state.bobRandom ? 'RANDOM' : state.bobBasis,
+      eveEnabled: state.eveEnabled,
+      eveBasisSetting: state.eveRandom ? 'RANDOM' : state.eveBasis,
+      eveProbability: state.eveEnabled ? 100 : 0
+    };
+    const result = sendOnePhoton(opts);
+    await animateBeam(!!result.eve);
+    addRecord({
+      n: state.log.length + 1,
+      aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
+      eveIntercepted: !!result.eve,
+      bobBasis: result.bobBasis, bobBit: result.bobBit
+    });
+    sendBtn.disabled = false;
+  });
+
+  /* ---------------- automation ---------------- */
+  const autoEveEnable = document.getElementById('autoEveEnable');
+  const autoEveBasis = document.getElementById('autoEveBasis');
+  const autoEveProb = document.getElementById('autoEveProb');
+  const autoEveProbVal = document.getElementById('autoEveProbVal');
+
+  autoEveEnable.addEventListener('change', () => {
+    const on = autoEveEnable.value === 'on';
+    autoEveBasis.disabled = !on;
+    autoEveProb.disabled = !on;
+  });
+  autoEveProb.addEventListener('input', () => {
+    autoEveProbVal.textContent = autoEveProb.value + '%';
+  });
+
+  const runBtn = document.getElementById('runAuto');
+  const progressBar = document.getElementById('autoProgress');
+  const autoStatus = document.getElementById('autoStatus');
+
+  function setControlsDisabled(disabled){
+    document.querySelectorAll('#aliceDial, #bobDial, #eveDial').forEach(el => el.style.pointerEvents = disabled ? 'none' : 'auto');
+    document.querySelectorAll('.pill, .fire-btn').forEach(el => el.disabled = disabled);
+    document.getElementById('eveToggle').disabled = disabled;
+    runBtn.disabled = disabled;
+  }
+
+  runBtn.addEventListener('click', async () => {
+    const count = Math.max(1, Math.min(5000, parseInt(document.getElementById('autoCount').value, 10) || 1));
+    const opts = {
+      aliceSetting: document.getElementById('autoAlice').value,
+      bobSetting: document.getElementById('autoBob').value,
+      eveEnabled: autoEveEnable.value === 'on',
+      eveBasisSetting: autoEveBasis.value,
+      eveProbability: parseInt(autoEveProb.value, 10)
+    };
+
+    state.running = true;
+    setControlsDisabled(true);
+    autoStatus.textContent = 'running…';
+
+    for (let i = 0; i < count; i++){
+      const result = sendOnePhoton(opts);
+      addRecord({
+        n: state.log.length + 1,
+        aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
+        eveIntercepted: !!result.eve,
+        bobBasis: result.bobBasis, bobBit: result.bobBit
+      });
+      progressBar.style.width = (((i+1)/count)*100).toFixed(1) + '%';
+      if (i % 15 === 0) await new Promise(r => setTimeout(r, 0)); // keep UI responsive
+    }
+
+    autoStatus.textContent = `done — ${count} qubits exchanged`;
+    setControlsDisabled(false);
+    state.running = false;
+    setTimeout(() => { progressBar.style.width = '0%'; }, 1200);
+  });
+
+  document.getElementById('clearLog').addEventListener('click', () => {
+    state.log = [];
+    aliceRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no photons sent yet</td></tr>';
+    bobRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no measurements yet</td></tr>';
+    led0.classList.remove('lit-0'); led1.classList.remove('lit-1');
+    updateCounts();
+    updateAnalysis();
+    autoStatus.textContent = 'idle';
+  });
+
+  /* ---------------- CSV export ---------------- */
+  function toCSV(rows){
+    return rows.map(r => r.join(',')).join('\r\n');
+  }
+  function download(filename, text){
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('dlAlice').addEventListener('click', () => {
+    const rows = [['n','basis','bit_sent']];
+    state.log.forEach(r => rows.push([r.n, r.aliceBasis, r.aliceBit]));
+    download('alice_log.csv', toCSV(rows));
+  });
+  document.getElementById('dlBob').addEventListener('click', () => {
+    const rows = [['n','basis','bit_measured']];
+    state.log.forEach(r => rows.push([r.n, r.bobBasis, r.bobBit]));
+    download('bob_log.csv', toCSV(rows));
+  });
+
+  updateCounts();
+  updateAnalysis();
+})();
+</script>
+</body>
+</html>
