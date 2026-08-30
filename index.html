@@ -20,16 +20,19 @@
     --text-dim: #9c99ac;
     --text-faint: #6b687c;
 
-    --maroon: #9e1b34;
-    --maroon-bright: #c6273f;
     --gold: #ffc72c;
 
-    --alice: #8a5cd6;
-    --alice-dim: #4a3670;
-    --bob: #4f7cf0;
-    --bob-dim: #2c3d70;
-    --eve: #c6273f;
-    --eve-dim: #5c2230;
+    --alice: #2F9E56;
+    --alice-bright: #7FE3A1;
+    --alice-dim: #123821;
+
+    --bob: #005D7E;
+    --bob-bright: #6FD6FF;
+    --bob-dim: #062430;
+
+    --eve: #96172E;
+    --eve-bright: #FF95A8;
+    --eve-dim: #3B0A15;
 
     --beam: #7dffb0;
     --beam-glow: rgba(125,255,176,.55);
@@ -50,8 +53,8 @@
   body{
     margin:0;
     background:
-      radial-gradient(1200px 700px at 15% -10%, rgba(138,92,214,.10), transparent 55%),
-      radial-gradient(1100px 650px at 90% 0%, rgba(79,124,240,.10), transparent 55%),
+      radial-gradient(1200px 700px at 15% -10%, rgba(47,158,86,.10), transparent 55%),
+      radial-gradient(1100px 650px at 90% 0%, rgba(0,93,126,.14), transparent 55%),
       var(--bg);
     color: var(--text);
     font-family: var(--font-body);
@@ -86,7 +89,9 @@
     border-bottom: 1px solid var(--line-soft);
   }
   .brand{ display:flex; align-items:center; gap:16px; }
-  .brand img{ height: 34px; width:auto; display:block; filter: drop-shadow(0 0 0 transparent); }
+  .brand-link{ display:flex; align-items:center; opacity:1; transition: opacity .15s; }
+  .brand-link:hover{ opacity:.8; }
+  .brand img{ height: 34px; width:auto; display:block; }
   .brand .divider{ width:1px; height: 30px; background: var(--line); }
   .titleblock .eyebrow{
     font-family: var(--font-mono);
@@ -114,7 +119,7 @@
   section.block{ margin-bottom: 34px; }
   .section-head{
     display:flex;
-    align-items:baseline;
+    align-items:center;
     gap: 10px;
     margin-bottom: 14px;
   }
@@ -135,37 +140,10 @@
     color: var(--text-dim);
     font-weight:600;
   }
+  .section-head .spacer{ flex:1; }
 
   /* ---------- Bench ---------- */
-  .bench-wrap{ position:relative; }
-  .beam-track{
-    position:absolute;
-    left: 0; right:0;
-    top: 108px;
-    height: 2px;
-    background-image: repeating-linear-gradient(to right, var(--beam) 0 10px, transparent 10px 20px);
-    opacity:.35;
-    z-index:0;
-    pointer-events:none;
-  }
-  .beam-pulse{
-    position:absolute;
-    top: 102px;
-    width: 14px; height:14px;
-    border-radius: 50%;
-    background: var(--beam);
-    box-shadow: 0 0 14px 4px var(--beam-glow);
-    left: 0;
-    opacity: 0;
-    z-index: 1;
-    pointer-events:none;
-    transition: left .85s linear, opacity .15s linear, background .2s linear, box-shadow .2s linear;
-  }
-  .beam-pulse.intercepted{ background: var(--eve); box-shadow: 0 0 16px 5px rgba(198,39,63,.55); }
-
   .bench{
-    position:relative;
-    z-index:2;
     display:grid;
     grid-template-columns: 1.15fr 0.85fr 1.15fr;
     gap: 18px;
@@ -173,7 +151,6 @@
   }
   @media (max-width: 860px){
     .bench{ grid-template-columns: 1fr; }
-    .beam-track, .beam-pulse{ display:none; }
   }
 
   .station{
@@ -204,9 +181,9 @@
     font-size: 18px;
     display:flex; align-items:center; gap:8px;
   }
-  .station.alice .station-name{ color: #cdb4ff; }
-  .station.bob .station-name{ color: #b7c9ff; }
-  .station.eve .station-name{ color: #ff9fb0; }
+  .station.alice .station-name{ color: var(--alice-bright); }
+  .station.bob .station-name{ color: var(--bob-bright); }
+  .station.eve .station-name{ color: var(--eve-bright); }
   .station-role{
     font-family: var(--font-mono);
     font-size: 11px;
@@ -262,25 +239,25 @@
   .station.eve .pill.active{ background: var(--eve); border-color: var(--eve); color:#fff; }
   .pill.rand{ display:inline-flex; align-items:center; gap:5px; }
 
-  .station-note{ font-size:12px; color: var(--text-faint); text-align:center; margin: -6px 0 14px; }
+  .station-note{ font-size:12px; color: var(--text-faint); text-align:center; margin: -6px 0 14px; min-height: 32px; }
 
   /* Alice launch button */
   .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top: 6px; }
   .fire-btn{
     width: 86px; height: 86px; border-radius: 50%;
-    background: radial-gradient(circle at 32% 28%, #ff5b6e, var(--maroon-bright) 55%, var(--maroon) 100%);
-    border: 3px solid #5c0f1c;
-    box-shadow: 0 6px 0 #5c0f1c, 0 10px 18px rgba(198,39,63,.35);
+    background: radial-gradient(circle at 32% 28%, #a9f5c1, var(--alice) 55%, #1c6a38 100%);
+    border: 3px solid #123821;
+    box-shadow: 0 6px 0 #123821, 0 10px 18px rgba(47,158,86,.35);
     color:#fff; font-family: var(--font-display); font-weight:700; font-size: 13px; letter-spacing:.04em;
     cursor:pointer;
     transition: transform .08s, box-shadow .08s;
   }
   .fire-btn:hover{ filter:brightness(1.06); }
-  .fire-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 #5c0f1c, 0 4px 10px rgba(198,39,63,.35); }
+  .fire-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 #123821, 0 4px 10px rgba(47,158,86,.35); }
   .fire-btn:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none; transform:none; }
   .fire-hint{ font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.08em; }
 
-  /* Bob detector */
+  /* detectors (Bob + Eve) */
   .detector{
     background: var(--bg-panel-2);
     border: 1px solid var(--line);
@@ -302,7 +279,6 @@
   }
   .led .bulb.lit-0{ background: var(--led0); color:#04211d; border-color: var(--led0); box-shadow: 0 0 18px 4px rgba(51,230,200,.55); }
   .led .bulb.lit-1{ background: var(--led1); color:#2b1600; border-color: var(--led1); box-shadow: 0 0 18px 4px rgba(255,171,46,.55); }
-  .led .cap{ font-family: var(--font-mono); font-size:10px; color: var(--text-faint); text-transform:uppercase; }
 
   /* Eve empty state */
   .eve-off{
@@ -318,6 +294,30 @@
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing:.05em;
+  }
+
+  /* ---------- beam rail (between sections 01 and 02) ---------- */
+  .beam-rail{ position:relative; height: 46px; margin: 0 0 30px; }
+  .beam-line{
+    position:absolute; left:0; right:0; top:50%; height:2px; transform:translateY(-50%);
+    background-image: repeating-linear-gradient(to right, var(--beam) 0 10px, transparent 10px 20px);
+    opacity:.4;
+  }
+  .beam-eve-marker{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    font-family: var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color: var(--eve-bright); background: var(--eve-dim); border:1px solid var(--eve);
+    border-radius:100px; padding: 3px 10px; display:none;
+  }
+  .beam-eve-marker.show{ display:block; }
+  .beam-arrow{
+    position:absolute; top:50%; left:0;
+    transform: translate(-50%,-50%);
+    font-size: 26px; line-height:1;
+    color: var(--beam);
+    opacity: 0;
+    transition: left linear, color .25s linear, opacity .2s linear;
+    will-change: left;
   }
 
   /* ---------- Automation ---------- */
@@ -375,6 +375,7 @@
   .btn.primary:hover{ filter:brightness(1.05); }
   .btn:disabled{ opacity:.4; cursor:not-allowed; }
   .btn.ghost{ background:transparent; }
+  .btn.btn-sm{ font-size: 11px; padding: 6px 12px; }
 
   .progress{
     flex:1;
@@ -402,10 +403,10 @@
   }
   .stat .label{ font-family: var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:6px; }
   .stat .value{ font-family: var(--font-display); font-size: 22px; font-weight:700; }
-  .stat.warn .value{ color: var(--eve); }
+  .stat.warn .value{ color: var(--eve-bright); }
   .stat.ok .value{ color: var(--beam); }
   .sifted-key{
-    margin-top: 14px;
+    margin-top: 12px;
     font-family: var(--font-mono);
     font-size: 13px;
     word-break: break-all;
@@ -413,8 +414,10 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     padding: 12px 14px;
-    color: var(--beam);
   }
+  .sifted-key .key-label{ color: var(--text-faint); margin-right: 6px; }
+  .sifted-key.alice-key{ color: var(--alice-bright); }
+  .sifted-key.bob-key{ color: var(--bob-bright); }
   .alert-banner{
     margin-top:12px;
     border: 1px solid var(--eve);
@@ -495,7 +498,9 @@
 
   <header class="topbar">
     <div class="brand">
-      <img src="assets/logo.png" alt="University of Waterloo — Institute for Quantum Computing">
+      <a class="brand-link" href="https://uwaterloo.ca/institute-for-quantum-computing/outreach/quantum-educators/teacher-resources" target="_blank" rel="noopener">
+        <img src="assets/logo.png" alt="University of Waterloo — Institute for Quantum Computing">
+      </a>
       <div class="divider"></div>
       <div class="titleblock">
         <p class="eyebrow">Digital optics bench</p>
@@ -509,80 +514,80 @@
   <section class="block">
     <div class="section-head"><span class="num">01</span><h2>The optics bench — manual exchange</h2></div>
 
-    <div class="bench-wrap">
-      <div class="beam-track"></div>
-      <div class="beam-pulse" id="beamPulse"></div>
-
-      <div class="bench">
-        <!-- ALICE -->
-        <div class="station alice">
-          <div class="station-head">
-            <div>
-              <div class="station-name">Alice</div>
-              <div class="station-role">Laser · half-wave plate</div>
-            </div>
-          </div>
-
-          <div class="dial-wrap"><div id="aliceDial"></div></div>
-          <div class="pill-row" id="alicePills"></div>
-          <div class="station-note" id="aliceNote">Sending <strong>H</strong> · basis H/V</div>
-
-          <div class="fire-btn-wrap">
-            <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
-            <span class="fire-hint">pulse switch</span>
+    <div class="bench">
+      <!-- ALICE -->
+      <div class="station alice">
+        <div class="station-head">
+          <div>
+            <div class="station-name">Alice</div>
+            <div class="station-role">State preparation</div>
           </div>
         </div>
 
-        <!-- EVE -->
-        <div class="station eve">
-          <div class="station-head">
-            <div>
-              <div class="station-name">Eve?</div>
-              <div class="station-role">Quarter-wave plate</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="eveToggle">
-              <span class="track"><span class="knob"></span></span>
-            </label>
-          </div>
+        <div class="dial-wrap"><div id="aliceDial"></div></div>
+        <div class="pill-row" id="alicePills"></div>
+        <div class="station-note" id="aliceNote">Sending <strong>H</strong> · basis H/V</div>
 
-          <div id="eveOnBlock" style="display:none;">
-            <div class="dial-wrap"><div id="eveDial"></div></div>
-            <div class="pill-row" id="evePills"></div>
-            <div class="station-note" id="eveNote">Measuring in H/V</div>
+        <div class="fire-btn-wrap">
+          <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
+          <span class="fire-hint">pulse switch</span>
+        </div>
+      </div>
+
+      <!-- EVE -->
+      <div class="station eve">
+        <div class="station-head">
+          <div>
+            <div class="station-name">Eve?</div>
+            <div class="station-role">Disruptive measurement</div>
           </div>
-          <div id="eveOffBlock" class="eve-off">
-            <div class="dash-box">no eavesdropper<br>on the channel</div>
-          </div>
+          <label class="switch">
+            <input type="checkbox" id="eveToggle">
+            <span class="track"><span class="knob"></span></span>
+          </label>
         </div>
 
-        <!-- BOB -->
-        <div class="station bob">
-          <div class="station-head">
-            <div>
-              <div class="station-name">Bob</div>
-              <div class="station-role">Half-wave plate · detectors</div>
-            </div>
-          </div>
-
-          <div class="dial-wrap"><div id="bobDial"></div></div>
-          <div class="pill-row" id="bobPills"></div>
-          <div class="station-note" id="bobNote">Measuring in H/V</div>
-
+        <div id="eveOnBlock" style="display:none;">
+          <div class="dial-wrap"><div id="eveDial"></div></div>
+          <div class="pill-row" id="evePills"></div>
+          <div class="station-note" id="eveNote">Measuring in H/V</div>
           <div class="detector">
-            <div class="led">
-              <div class="bulb" id="led0">0</div>
-              <span class="cap">transmitted</span>
-            </div>
-            <div class="led">
-              <div class="bulb" id="led1">1</div>
-              <span class="cap">reflected</span>
-            </div>
+            <div class="led"><div class="bulb" id="eveLed0">0</div></div>
+            <div class="led"><div class="bulb" id="eveLed1">1</div></div>
           </div>
+        </div>
+        <div id="eveOffBlock" class="eve-off">
+          <div class="dash-box">no eavesdropper<br>on the channel</div>
+        </div>
+      </div>
+
+      <!-- BOB -->
+      <div class="station bob">
+        <div class="station-head">
+          <div>
+            <div class="station-name">Bob</div>
+            <div class="station-role">State measurement</div>
+          </div>
+        </div>
+
+        <div class="dial-wrap"><div id="bobDial"></div></div>
+        <div class="pill-row" id="bobPills"></div>
+        <div class="station-note" id="bobNote">Measuring in H/V</div>
+
+        <div class="detector">
+          <div class="led"><div class="bulb" id="led0">0</div></div>
+          <div class="led"><div class="bulb" id="led1">1</div></div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- ============ BEAM RAIL ============ -->
+  <div class="beam-rail" aria-hidden="true">
+    <div class="beam-line"></div>
+    <div class="beam-eve-marker" id="beamEveMarker">EVE</div>
+    <div class="beam-arrow" id="beamArrow">→</div>
+  </div>
 
   <!-- ============ AUTOMATION ============ -->
   <section class="block">
@@ -636,7 +641,6 @@
       </div>
       <div class="console-actions">
         <button class="btn primary" id="runAuto">▶ Run sequence</button>
-        <button class="btn ghost" id="clearLog">Clear log</button>
         <div class="progress"><i id="autoProgress"></i></div>
         <span class="console-status" id="autoStatus">idle</span>
       </div>
@@ -652,13 +656,18 @@
       <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
       <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
     </div>
-    <div class="sifted-key" id="siftedKeyBox">Sifted key will appear here once Alice and Bob compare bases…</div>
-    <div class="alert-banner" id="eveAlert">⚠ Error rate is high enough to suggest an eavesdropper on the channel — in a real BB84 exchange, Alice and Bob would discard this key.</div>
+    <div class="sifted-key alice-key" id="aliceSiftedBox"><span class="key-label">Alice —</span>sifted key will appear here once bases are compared…</div>
+    <div class="sifted-key bob-key" id="siftedKeyBox"><span class="key-label">Bob —</span>sifted key will appear here once bases are compared…</div>
+    <div class="alert-banner" id="eveAlert">⚠ Errors have appeared in the sifted key. In a real BB84 exchange this signals interference on the channel — possibly an eavesdropper — and Alice and Bob would discard this key rather than use it.</div>
   </section>
 
   <!-- ============ LOGS ============ -->
   <section class="block">
-    <div class="section-head"><span class="num">04</span><h2>Session logs</h2></div>
+    <div class="section-head">
+      <span class="num">04</span><h2>Session logs</h2>
+      <span class="spacer"></span>
+      <button class="btn ghost btn-sm" id="clearLog">Clear log</button>
+    </div>
     <div class="logs-grid">
       <div class="terminal">
         <div class="terminal-head"><span>Alice — serial monitor</span><span id="aliceCount">0 rows</span></div>
@@ -690,7 +699,7 @@
   </section>
 
   <footer>
-    <span>Modelled on <em>Build Your Own Quantum Key Distribution</em>, IQC Scientific Outreach, University of Waterloo.</span>
+    <span>Modelled on <a href="https://uwaterloo.ca/institute-for-quantum-computing/outreach/quantum-educators/teacher-resources" target="_blank" rel="noopener"><em>Build Your Own Quantum Key Distribution</em></a>, IQC Scientific Outreach Team, University of Waterloo.</span>
     <span>Digital simulator · not for cryptographic use</span>
   </footer>
 </div>
@@ -702,22 +711,22 @@
   /* ---------------- physics model ---------------- */
   // Alice's four preparable states, angles match the kit's HWP mount (0°, 22.5°, 45°, 67.5°)
   const ALICE_STATES = {
-    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (0°)' },
-    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45° / D (22.5°)' },
-    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (45°)' },
-    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'−45° / A (67.5°)' }
+    H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (0°)',      symbol:'\u2192' },
+    D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (22.5\u00B0)', symbol:'\u2197' },
+    V: { basis:'HV', bit:1, angle: 20, label:'V',   full:'Vertical (45\u00B0)',       symbol:'\u2191' },
+    A: { basis:'DA', bit:1, angle: 60, label:'-45', full:'\u221245\u00B0 / A (67.5\u00B0)', symbol:'\u2198' }
   };
   const ALICE_ORDER = ['H','D','V','A'];
 
   // Bob's two measurement bases (his HWP has only two settings: 0° and 22.5°)
   const BOB_BASES = {
-    HV: { angle:-30, label:'H/V',  full:'H / V basis (0°)' },
-    DA: { angle: 30, label:'±45°', full:'±45° basis (22.5°)' }
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
+    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (22.5\u00B0)' }
   };
   // Eve's two "measurement" bases via her quarter-wave plate (labelled 0° and 45° on the kit)
   const EVE_BASES = {
-    HV: { angle:-30, label:'H/V',  full:'H / V basis (0°)' },
-    DA: { angle: 30, label:'±45°', full:'±45° basis (45°)' }
+    HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
+    DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (45\u00B0)' }
   };
 
   function randBit(){ return Math.random() < 0.5 ? 0 : 1; }
@@ -728,6 +737,10 @@
   function pickBasis(setting){
     if (setting === 'RANDOM') return Math.random() < 0.5 ? 'HV' : 'DA';
     return setting;
+  }
+  function symbolForBasisBit(basis, bit){
+    const key = ALICE_ORDER.find(k => ALICE_STATES[k].basis === basis && ALICE_STATES[k].bit === bit);
+    return ALICE_STATES[key].symbol;
   }
 
   // Simulates one photon travelling Alice -> (Eve?) -> Bob.
@@ -757,10 +770,7 @@
     if (bobBasis === effBasis) bobBit = effBit;
     else bobBit = randBit();
 
-    return {
-      aliceKey, aliceBasis: alice.basis, aliceBit: alice.bit,
-      eve, bobBasis, bobBit
-    };
+    return { aliceKey, aliceBasis: alice.basis, aliceBit: alice.bit, eve, bobBasis, bobBit };
   }
 
   /* ---------------- dial widget ---------------- */
@@ -840,7 +850,7 @@
     aliceRandom: false,
     bobRandom: false,
     eveRandom: false,
-    log: [], // {n, aliceBasis, aliceBit, eveIntercepted, bobBasis, bobBit}
+    log: [],
     running: false
   };
 
@@ -856,7 +866,7 @@
   eveDial.setKey('HV');
 
   /* ---- pill rows ---- */
-  function buildPills(container, options, onPick, getActive){
+  function buildPills(container, options, onPick){
     container.innerHTML = '';
     options.forEach(opt => {
       const b = document.createElement('button');
@@ -867,8 +877,7 @@
       container.appendChild(b);
     });
     return {
-      refresh(){
-        const activeKey = getActive();
+      refresh(activeKey){
         [...container.children].forEach((el, i) => {
           el.classList.toggle('active', options[i].key === activeKey);
         });
@@ -883,7 +892,7 @@
     if (key === 'RANDOM'){ state.aliceRandom = true; }
     else { state.aliceRandom = false; state.aliceKey = key; aliceDial.setKey(key); }
     refreshAll();
-  }, () => state.aliceRandom ? 'RANDOM' : state.aliceKey);
+  });
 
   const bobPills = buildPills(document.getElementById('bobPills'), [
     { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
@@ -891,7 +900,7 @@
     if (key === 'RANDOM'){ state.bobRandom = true; }
     else { state.bobRandom = false; state.bobBasis = key; bobDial.setKey(key); }
     refreshAll();
-  }, () => state.bobRandom ? 'RANDOM' : state.bobBasis);
+  });
 
   const evePills = buildPills(document.getElementById('evePills'), [
     { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
@@ -899,10 +908,12 @@
     if (key === 'RANDOM'){ state.eveRandom = true; }
     else { state.eveRandom = false; state.eveBasis = key; eveDial.setKey(key); }
     refreshAll();
-  }, () => state.eveRandom ? 'RANDOM' : state.eveBasis);
+  });
 
   function refreshAll(){
-    alicePills.refresh(); bobPills.refresh(); evePills.refresh();
+    alicePills.refresh(state.aliceRandom ? 'RANDOM' : state.aliceKey);
+    bobPills.refresh(state.bobRandom ? 'RANDOM' : state.bobBasis);
+    evePills.refresh(state.eveRandom ? 'RANDOM' : state.eveBasis);
     document.getElementById('aliceNote').innerHTML = state.aliceRandom
       ? 'Sending a <strong>random state</strong> each pulse'
       : `Sending <strong>${ALICE_STATES[state.aliceKey].label}</strong> · ${ALICE_STATES[state.aliceKey].full}`;
@@ -915,60 +926,102 @@
   }
   refreshAll();
 
+  function noteRandomAlice(key){
+    const s = ALICE_STATES[key];
+    document.getElementById('aliceNote').innerHTML = `Random → sent <strong>${s.label}</strong> ${s.symbol} this round`;
+  }
+  function noteRandomBob(basis){
+    const b = BOB_BASES[basis];
+    document.getElementById('bobNote').innerHTML = `Random → measured in <strong>${b.label}</strong> this round`;
+  }
+  function noteRandomEve(basis){
+    const b = EVE_BASES[basis];
+    document.getElementById('eveNote').innerHTML = `Random → measured in <strong>${b.label}</strong> this round`;
+  }
+
   /* ---- eve toggle ---- */
   const eveToggle = document.getElementById('eveToggle');
   const eveOnBlock = document.getElementById('eveOnBlock');
   const eveOffBlock = document.getElementById('eveOffBlock');
+  const beamEveMarker = document.getElementById('beamEveMarker');
   eveToggle.addEventListener('change', () => {
     state.eveEnabled = eveToggle.checked;
     eveOnBlock.style.display = state.eveEnabled ? 'block' : 'none';
     eveOffBlock.style.display = state.eveEnabled ? 'none' : 'block';
+    beamEveMarker.classList.toggle('show', state.eveEnabled);
+    if (!state.eveEnabled) clearEveLed();
   });
 
+  /* ---------------- LEDs ---------------- */
+  const led0 = document.getElementById('led0');
+  const led1 = document.getElementById('led1');
+  const eveLed0 = document.getElementById('eveLed0');
+  const eveLed1 = document.getElementById('eveLed1');
+
+  function litLed(bulb0, bulb1, bit){
+    bulb0.classList.remove('lit-0');
+    bulb1.classList.remove('lit-1');
+    if (bit === 0) bulb0.classList.add('lit-0');
+    else bulb1.classList.add('lit-1');
+  }
+  function clearEveLed(){
+    eveLed0.classList.remove('lit-0');
+    eveLed1.classList.remove('lit-1');
+  }
+
   /* ---------------- beam animation ---------------- */
-  const pulse = document.getElementById('beamPulse');
-  const bench = document.querySelector('.bench');
-  function animateBeam(intercepted){
+  const beamArrow = document.getElementById('beamArrow');
+  const beamRail = document.querySelector('.beam-rail');
+
+  function playSinglePhoton(result, durationMs){
     return new Promise(resolve => {
-      const rect = bench.getBoundingClientRect();
-      const wrapRect = document.querySelector('.bench-wrap').getBoundingClientRect();
-      const startX = 0, endX = rect.width - 14;
-      pulse.classList.remove('intercepted');
-      pulse.style.transition = 'none';
-      pulse.style.left = startX + 'px';
-      pulse.style.opacity = '1';
-      // force reflow so the next transition actually animates
-      void pulse.offsetWidth;
-      pulse.style.transition = 'left .85s linear, opacity .15s linear, background .2s linear';
-      requestAnimationFrame(() => {
-        if (intercepted) {
-          setTimeout(() => pulse.classList.add('intercepted'), 380);
-        }
-        pulse.style.left = endX + 'px';
-      });
-      setTimeout(() => { pulse.style.opacity = '0'; resolve(); }, 900);
+      const railW = beamRail.getBoundingClientRect().width;
+      const endX = Math.max(0, railW - 4);
+      beamArrow.style.transition = 'none';
+      beamArrow.style.left = '0px';
+      beamArrow.style.color = 'var(--beam)';
+      beamArrow.textContent = ALICE_STATES[result.aliceKey].symbol;
+      beamArrow.style.opacity = '1';
+      void beamArrow.offsetWidth;
+      beamArrow.style.transition = `left ${durationMs}ms linear, color .25s linear, opacity .2s linear`;
+      requestAnimationFrame(() => { beamArrow.style.left = endX + 'px'; });
+      if (result.eve){
+        setTimeout(() => {
+          beamArrow.textContent = symbolForBasisBit(result.eve.basis, result.eve.bit);
+          beamArrow.style.color = 'var(--eve-bright)';
+        }, durationMs * 0.5);
+      }
+      setTimeout(() => { beamArrow.style.opacity = '0'; resolve(); }, durationMs + 60);
     });
   }
 
-  /* ---------------- logging & LEDs ---------------- */
+  function playStreamSweep(totalMs, tinted){
+    const railW = beamRail.getBoundingClientRect().width;
+    const endX = Math.max(0, railW - 4);
+    beamArrow.style.transition = 'none';
+    beamArrow.style.left = '0px';
+    beamArrow.textContent = '\u2192';
+    beamArrow.style.color = tinted ? 'var(--eve-bright)' : 'var(--beam)';
+    beamArrow.style.opacity = '1';
+    void beamArrow.offsetWidth;
+    beamArrow.style.transition = `left ${totalMs}ms linear, opacity .2s linear`;
+    requestAnimationFrame(() => { beamArrow.style.left = endX + 'px'; });
+    setTimeout(() => { beamArrow.style.opacity = '0'; }, totalMs + 60);
+  }
+
+  /* ---------------- logging ---------------- */
   const aliceRowsEl = document.getElementById('aliceRows');
   const bobRowsEl = document.getElementById('bobRows');
-  const led0 = document.getElementById('led0');
-  const led1 = document.getElementById('led1');
 
   function basisLabel(b){ return b === 'HV' ? 'H/V' : '±45°'; }
-
-  function litLed(bit){
-    led0.classList.remove('lit-0');
-    led1.classList.remove('lit-1');
-    if (bit === 0) led0.classList.add('lit-0');
-    else led1.classList.add('lit-1');
-  }
+  function csvBasis(b){ return b === 'HV' ? 'Z' : 'X'; }
 
   function addRecord(rec){
     state.log.push(rec);
     renderLastRow(rec);
-    litLed(rec.bobBit);
+    litLed(led0, led1, rec.bobBit);
+    if (rec.eveIntercepted) litLed(eveLed0, eveLed1, rec.eveBit);
+    else if (state.eveEnabled) clearEveLed();
     updateAnalysis();
     updateCounts();
   }
@@ -1018,18 +1071,21 @@
       alertBox.classList.remove('show');
     } else {
       const rate = errors.length / matched.length;
+      const perfect = rate === 0;
       errEl.textContent = (rate*100).toFixed(1) + '%';
-      const high = rate > 0.11; // BB84 rule-of-thumb QBER threshold
-      errCard.classList.toggle('warn', high);
-      errCard.classList.toggle('ok', !high);
-      alertBox.classList.toggle('show', high);
+      errCard.classList.toggle('warn', !perfect);
+      errCard.classList.toggle('ok', perfect);
+      alertBox.classList.toggle('show', !perfect);
     }
 
-    const keyBox = document.getElementById('siftedKeyBox');
+    const aliceKeyBox = document.getElementById('aliceSiftedBox');
+    const bobKeyBox = document.getElementById('siftedKeyBox');
     if (matched.length === 0){
-      keyBox.textContent = 'Sifted key will appear here once Alice and Bob compare bases…';
+      aliceKeyBox.innerHTML = '<span class="key-label">Alice —</span>sifted key will appear here once bases are compared…';
+      bobKeyBox.innerHTML = '<span class="key-label">Bob —</span>sifted key will appear here once bases are compared…';
     } else {
-      keyBox.textContent = 'Bob\u2019s sifted key: ' + matched.map(r => r.bobBit).join('');
+      aliceKeyBox.innerHTML = '<span class="key-label">Alice —</span>' + matched.map(r => r.aliceBit).join('');
+      bobKeyBox.innerHTML = '<span class="key-label">Bob —</span>' + matched.map(r => r.bobBit).join('');
     }
   }
 
@@ -1038,6 +1094,7 @@
   sendBtn.addEventListener('click', async () => {
     if (state.running) return;
     sendBtn.disabled = true;
+
     const opts = {
       aliceSetting: state.aliceRandom ? 'RANDOM' : state.aliceKey,
       bobSetting: state.bobRandom ? 'RANDOM' : state.bobBasis,
@@ -1046,11 +1103,20 @@
       eveProbability: state.eveEnabled ? 100 : 0
     };
     const result = sendOnePhoton(opts);
-    await animateBeam(!!result.eve);
+
+    aliceDial.setKey(result.aliceKey);
+    bobDial.setKey(result.bobBasis);
+    if (result.eve) eveDial.setKey(result.eve.basis);
+    if (state.aliceRandom) noteRandomAlice(result.aliceKey);
+    if (state.bobRandom) noteRandomBob(result.bobBasis);
+    if (state.eveEnabled && state.eveRandom && result.eve) noteRandomEve(result.eve.basis);
+
+    await playSinglePhoton(result, 1000);
+
     addRecord({
       n: state.log.length + 1,
       aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
-      eveIntercepted: !!result.eve,
+      eveIntercepted: !!result.eve, eveBit: result.eve ? result.eve.bit : null,
       bobBasis: result.bobBasis, bobBit: result.bobBit
     });
     sendBtn.disabled = false;
@@ -1096,16 +1162,36 @@
     setControlsDisabled(true);
     autoStatus.textContent = 'running…';
 
-    for (let i = 0; i < count; i++){
-      const result = sendOnePhoton(opts);
-      addRecord({
-        n: state.log.length + 1,
-        aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
-        eveIntercepted: !!result.eve,
-        bobBasis: result.bobBasis, bobBit: result.bobBit
-      });
-      progressBar.style.width = (((i+1)/count)*100).toFixed(1) + '%';
-      if (i % 15 === 0) await new Promise(r => setTimeout(r, 0)); // keep UI responsive
+    // total sweep time never exceeds 5s, and stays snappy for small batches
+    const totalMs = Math.min(5000, 250 + count * 25);
+    playStreamSweep(totalMs, opts.eveEnabled);
+
+    const startTime = performance.now();
+    let processed = 0;
+    let lastResult = null;
+
+    while (processed < count){
+      const elapsed = performance.now() - startTime;
+      const shouldHave = Math.min(count, Math.ceil((elapsed / totalMs) * count));
+      while (processed < shouldHave){
+        const result = sendOnePhoton(opts);
+        lastResult = result;
+        addRecord({
+          n: state.log.length + 1,
+          aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
+          eveIntercepted: !!result.eve, eveBit: result.eve ? result.eve.bit : null,
+          bobBasis: result.bobBasis, bobBit: result.bobBit
+        });
+        processed++;
+      }
+      progressBar.style.width = ((processed / count) * 100).toFixed(1) + '%';
+      if (processed < count) await new Promise(r => requestAnimationFrame(r));
+    }
+
+    if (lastResult){
+      aliceDial.setKey(lastResult.aliceKey);
+      bobDial.setKey(lastResult.bobBasis);
+      if (lastResult.eve) eveDial.setKey(lastResult.eve.basis);
     }
 
     autoStatus.textContent = `done — ${count} qubits exchanged`;
@@ -1119,6 +1205,7 @@
     aliceRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no photons sent yet</td></tr>';
     bobRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no measurements yet</td></tr>';
     led0.classList.remove('lit-0'); led1.classList.remove('lit-1');
+    clearEveLed();
     updateCounts();
     updateAnalysis();
     autoStatus.textContent = 'idle';
@@ -1141,12 +1228,12 @@
 
   document.getElementById('dlAlice').addEventListener('click', () => {
     const rows = [['n','basis','bit_sent']];
-    state.log.forEach(r => rows.push([r.n, r.aliceBasis, r.aliceBit]));
+    state.log.forEach(r => rows.push([r.n, csvBasis(r.aliceBasis), r.aliceBit]));
     download('alice_log.csv', toCSV(rows));
   });
   document.getElementById('dlBob').addEventListener('click', () => {
     const rows = [['n','basis','bit_measured']];
-    state.log.forEach(r => rows.push([r.n, r.bobBasis, r.bobBit]));
+    state.log.forEach(r => rows.push([r.n, csvBasis(r.bobBasis), r.bobBit]));
     download('bob_log.csv', toCSV(rows));
   });
 
