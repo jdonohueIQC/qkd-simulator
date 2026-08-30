@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Build Your Own QKD — Digital Optics Bench</title>
+<title>Quantum Key Distribution Simulator</title>
 <meta name="description" content="An on-screen simulator of the IQC Build-Your-Own Quantum Key Distribution kit: polarization states, measurement bases, an optional eavesdropper, and BB84 key exchange.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,14 +93,6 @@
   .brand-link:hover{ opacity:.8; }
   .brand img{ height: 34px; width:auto; display:block; }
   .brand .divider{ width:1px; height: 30px; background: var(--line); }
-  .titleblock .eyebrow{
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--beam);
-    margin: 0 0 4px;
-  }
   .titleblock h1{
     font-family: var(--font-display);
     font-weight:700;
@@ -145,7 +137,7 @@
   /* ---------- Bench ---------- */
   .bench{
     display:grid;
-    grid-template-columns: 1.15fr 0.85fr 1.15fr;
+    grid-template-columns: 1.1fr 1fr 1.1fr;
     gap: 18px;
     align-items:start;
   }
@@ -161,6 +153,7 @@
     position:relative;
     overflow:hidden;
   }
+  .station.eve{ padding: 22px 20px; }
   .station::before{
     content:"";
     position:absolute; inset:0 0 auto 0; height:3px;
@@ -203,8 +196,10 @@
     position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%;
     background: var(--text-faint); transition: transform .2s, background .2s;
   }
-  .switch input:checked + .track{ background: var(--eve-dim); border-color: var(--eve); }
-  .switch input:checked + .track .knob{ transform: translateX(16px); background: var(--eve); }
+  .switch input:checked + .track{ background: var(--alice-dim); border-color: var(--alice); }
+  .switch input:checked + .track .knob{ transform: translateX(16px); background: var(--alice); }
+  .switch.eve-switch input:checked + .track{ background: var(--eve-dim); border-color: var(--eve); }
+  .switch.eve-switch input:checked + .track .knob{ background: var(--eve); }
   .switch input:focus-visible + .track{ outline: 2px solid var(--gold); outline-offset:2px; }
 
   /* dial */
@@ -297,28 +292,54 @@
   }
 
   /* ---------- beam rail (between sections 01 and 02) ---------- */
-  .beam-rail{ position:relative; height: 46px; margin: 0 0 30px; }
+  .beam-rail{ position:relative; height: 58px; margin: 0 0 30px; }
   .beam-line{
     position:absolute; left:0; right:0; top:50%; height:2px; transform:translateY(-50%);
     background-image: repeating-linear-gradient(to right, var(--beam) 0 10px, transparent 10px 20px);
     opacity:.4;
   }
+  .tag-pill{
+    font-family: var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    border-radius:100px; padding: 3px 10px; border:1px solid; white-space:nowrap;
+  }
+  .tag-alice{ color: var(--alice-bright); background: var(--alice-dim); border-color: var(--alice); }
+  .tag-bob{ color: var(--bob-bright); background: var(--bob-dim); border-color: var(--bob); }
+  .tag-eve{ color: var(--eve-bright); background: var(--eve-dim); border-color: var(--eve); }
   .beam-eve-marker{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    font-family: var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-    color: var(--eve-bright); background: var(--eve-dim); border:1px solid var(--eve);
-    border-radius:100px; padding: 3px 10px; display:none;
+    display:none;
   }
   .beam-eve-marker.show{ display:block; }
-  .beam-arrow{
-    position:absolute; top:50%; left:0;
-    transform: translate(-50%,-50%);
-    font-size: 26px; line-height:1;
-    color: var(--beam);
-    opacity: 0;
-    transition: left linear, color .25s linear, opacity .2s linear;
+  .beam-endpoint{
+    position:absolute; top:50%; transform:translateY(-50%);
+    display:flex; align-items:center; gap:8px; z-index:2;
+  }
+  .beam-endpoint.start{ left:4px; }
+  .beam-endpoint.end{ right:4px; }
+  .beam-icon{ flex:0 0 auto; }
+  .laser-icon{
+    width:24px; height:16px; background:linear-gradient(180deg,#2b2b38,#17171f);
+    border:1px solid var(--line); border-radius:3px; position:relative;
+  }
+  .laser-icon::after{
+    content:""; position:absolute; top:50%; right:-4px; transform:translateY(-50%);
+    width:7px; height:7px; border-radius:50%; background:var(--beam);
+    box-shadow: 0 0 7px 2px var(--beam-glow);
+  }
+  .detector-icon{
+    width:20px; height:40px; background:var(--bg-panel-2); border:1px solid var(--line);
+    border-right:none; border-top-left-radius:40px; border-bottom-left-radius:40px;
+  }
+  .beam-photon{
+    position:absolute; top:50%; left:0; transform:translate(-50%,-50%);
+    width:38px; height:38px; border-radius:50%;
+    background:#000; border:2px solid var(--beam);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; z-index:3;
+    transition: left linear, opacity .2s linear;
     will-change: left;
   }
+  .beam-photon .glyph{ font-size:22px; line-height:1; color: var(--beam); transition: color .25s linear; }
 
   /* ---------- Automation ---------- */
   .console{
@@ -401,6 +422,8 @@
     border-radius: var(--radius-sm);
     padding: 14px 16px;
   }
+  .stat.clear-slot{ display:flex; align-items:center; justify-content:center; }
+  .stat.clear-slot .btn{ width:100%; }
   .stat .label{ font-family: var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:6px; }
   .stat .value{ font-family: var(--font-display); font-size: 22px; font-weight:700; }
   .stat.warn .value{ color: var(--eve-bright); }
@@ -409,15 +432,17 @@
     margin-top: 12px;
     font-family: var(--font-mono);
     font-size: 13px;
-    word-break: break-all;
     background: var(--bg-panel);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     padding: 12px 14px;
+    display:flex;
+    align-items:flex-start;
   }
-  .sifted-key .key-label{ color: var(--text-faint); margin-right: 6px; }
-  .sifted-key.alice-key{ color: var(--alice-bright); }
-  .sifted-key.bob-key{ color: var(--bob-bright); }
+  .sifted-key .key-label{ flex: 0 0 58px; color: var(--text-faint); }
+  .sifted-key .key-bits{ flex:1; word-break: break-all; }
+  .sifted-key.alice-key .key-bits{ color: var(--alice-bright); }
+  .sifted-key.bob-key .key-bits{ color: var(--bob-bright); }
   .alert-banner{
     margin-top:12px;
     border: 1px solid var(--eve);
@@ -503,16 +528,15 @@
       </a>
       <div class="divider"></div>
       <div class="titleblock">
-        <p class="eyebrow">Digital optics bench</p>
-        <h1>Build Your Own QKD — Simulator</h1>
+        <h1>Quantum Key Distribution Simulator</h1>
       </div>
     </div>
-    <div class="topbar-meta">BB84 polarization protocol<br>modelled on the IQC hands-on kit</div>
+    <div class="topbar-meta" id="topbarMeta">BB84 Polarization Protocol</div>
   </header>
 
   <!-- ============ BENCH ============ -->
   <section class="block">
-    <div class="section-head"><span class="num">01</span><h2>The optics bench — manual exchange</h2></div>
+    <div class="section-head"><span class="num">01</span><h2>Quantum exchange</h2></div>
 
     <div class="bench">
       <!-- ALICE -->
@@ -541,7 +565,7 @@
             <div class="station-name">Eve?</div>
             <div class="station-role">Disruptive measurement</div>
           </div>
-          <label class="switch">
+          <label class="switch eve-switch">
             <input type="checkbox" id="eveToggle">
             <span class="track"><span class="knob"></span></span>
           </label>
@@ -585,13 +609,25 @@
   <!-- ============ BEAM RAIL ============ -->
   <div class="beam-rail" aria-hidden="true">
     <div class="beam-line"></div>
-    <div class="beam-eve-marker" id="beamEveMarker">EVE</div>
-    <div class="beam-arrow" id="beamArrow">→</div>
+
+    <div class="beam-endpoint start">
+      <span class="tag-pill tag-alice">Alice</span>
+      <div class="beam-icon laser-icon"></div>
+    </div>
+
+    <div class="beam-eve-marker" id="beamEveMarker"><span class="tag-pill tag-eve">Eve</span></div>
+
+    <div class="beam-endpoint end">
+      <div class="beam-icon detector-icon"></div>
+      <span class="tag-pill tag-bob">Bob</span>
+    </div>
+
+    <div class="beam-photon" id="beamArrow"><span class="glyph" id="beamGlyph">→</span></div>
   </div>
 
   <!-- ============ AUTOMATION ============ -->
   <section class="block">
-    <div class="section-head"><span class="num">02</span><h2>Automated key exchange</h2></div>
+    <div class="section-head"><span class="num">02</span><h2>Quantum exchange, accelerated</h2></div>
     <div class="console">
       <div class="console-grid">
         <div class="field">
@@ -649,16 +685,27 @@
 
   <!-- ============ ANALYSIS ============ -->
   <section class="block">
-    <div class="section-head"><span class="num">03</span><h2>Sifted key &amp; error check</h2></div>
-    <div class="analysis-grid">
-      <div class="stat"><div class="label">Photons sent</div><div class="value" id="statSent">0</div></div>
-      <div class="stat"><div class="label">Bases matched</div><div class="value" id="statMatched">0</div></div>
-      <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
-      <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
+    <div class="section-head">
+      <span class="num">03</span><h2>Sifted key &amp; error check</h2>
+      <span class="spacer"></span>
+      <span class="console-status" id="analysisToggleLabel">visible</span>
+      <label class="switch">
+        <input type="checkbox" id="analysisToggle" checked>
+        <span class="track"><span class="knob"></span></span>
+      </label>
     </div>
-    <div class="sifted-key alice-key" id="aliceSiftedBox"><span class="key-label">Alice —</span>sifted key will appear here once bases are compared…</div>
-    <div class="sifted-key bob-key" id="siftedKeyBox"><span class="key-label">Bob —</span>sifted key will appear here once bases are compared…</div>
-    <div class="alert-banner" id="eveAlert">⚠ Errors have appeared in the sifted key. In a real BB84 exchange this signals interference on the channel — possibly an eavesdropper — and Alice and Bob would discard this key rather than use it.</div>
+    <div id="analysisBody">
+      <div class="analysis-grid">
+        <div class="stat clear-slot"><button class="btn btn-sm" id="clearLog2">Clear log</button></div>
+        <div class="stat"><div class="label">Photons sent</div><div class="value" id="statSent">0</div></div>
+        <div class="stat"><div class="label">Bases matched</div><div class="value" id="statMatched">0</div></div>
+        <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
+        <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
+      </div>
+      <div class="sifted-key alice-key"><span class="key-label">Alice</span><span class="key-bits" id="aliceKeyBits">sifted key will appear here once bases are compared…</span></div>
+      <div class="sifted-key bob-key"><span class="key-label">Bob</span><span class="key-bits" id="bobKeyBits">sifted key will appear here once bases are compared…</span></div>
+      <div class="alert-banner" id="eveAlert">⚠ Errors have appeared in the sifted key. In a real BB84 exchange this signals interference on the channel — possibly an eavesdropper — and Alice and Bob would discard this key rather than use it.</div>
+    </div>
   </section>
 
   <!-- ============ LOGS ============ -->
@@ -700,7 +747,7 @@
 
   <footer>
     <span>Modelled on <a href="https://uwaterloo.ca/institute-for-quantum-computing/outreach/quantum-educators/teacher-resources" target="_blank" rel="noopener"><em>Build Your Own Quantum Key Distribution</em></a>, IQC Scientific Outreach Team, University of Waterloo.</span>
-    <span>Digital simulator · not for cryptographic use</span>
+    <span>Simulator, not cryptographically secure.</span>
   </footer>
 </div>
 
@@ -709,7 +756,6 @@
   "use strict";
 
   /* ---------------- physics model ---------------- */
-  // Alice's four preparable states, angles match the kit's HWP mount (0°, 22.5°, 45°, 67.5°)
   const ALICE_STATES = {
     H: { basis:'HV', bit:0, angle:-60, label:'H',   full:'Horizontal (0°)',      symbol:'\u2192' },
     D: { basis:'DA', bit:0, angle:-20, label:'+45', full:'+45\u00B0 / D (22.5\u00B0)', symbol:'\u2197' },
@@ -718,12 +764,10 @@
   };
   const ALICE_ORDER = ['H','D','V','A'];
 
-  // Bob's two measurement bases (his HWP has only two settings: 0° and 22.5°)
   const BOB_BASES = {
     HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
     DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (22.5\u00B0)' }
   };
-  // Eve's two "measurement" bases via her quarter-wave plate (labelled 0° and 45° on the kit)
   const EVE_BASES = {
     HV: { angle:-30, label:'H/V',  full:'H / V basis (0\u00B0)' },
     DA: { angle: 30, label:'\u00B145\u00B0', full:'\u00B145\u00B0 basis (45\u00B0)' }
@@ -743,7 +787,6 @@
     return ALICE_STATES[key].symbol;
   }
 
-  // Simulates one photon travelling Alice -> (Eve?) -> Bob.
   function sendOnePhoton(opts){
     const aliceKey = pickAliceKey(opts.aliceSetting);
     const alice = ALICE_STATES[aliceKey];
@@ -756,9 +799,9 @@
       const eveBasis = pickBasis(opts.eveBasisSetting);
       let eveBit;
       if (eveBasis === alice.basis) {
-        eveBit = alice.bit; // Eve happens to measure in the same basis: no disturbance
+        eveBit = alice.bit;
       } else {
-        eveBit = randBit(); // wrong basis: outcome (and re-sent state) is random
+        eveBit = randBit();
       }
       eve = { basis: eveBasis, bit: eveBit };
       effBasis = eveBasis;
@@ -952,6 +995,15 @@
     if (!state.eveEnabled) clearEveLed();
   });
 
+  /* ---- analysis visibility toggle ---- */
+  const analysisToggle = document.getElementById('analysisToggle');
+  const analysisBody = document.getElementById('analysisBody');
+  const analysisToggleLabel = document.getElementById('analysisToggleLabel');
+  analysisToggle.addEventListener('change', () => {
+    analysisBody.style.display = analysisToggle.checked ? '' : 'none';
+    analysisToggleLabel.textContent = analysisToggle.checked ? 'visible' : 'hidden';
+  });
+
   /* ---------------- LEDs ---------------- */
   const led0 = document.getElementById('led0');
   const led1 = document.getElementById('led1');
@@ -964,44 +1016,55 @@
     if (bit === 0) bulb0.classList.add('lit-0');
     else bulb1.classList.add('lit-1');
   }
-  function clearEveLed(){
-    eveLed0.classList.remove('lit-0');
-    eveLed1.classList.remove('lit-1');
-  }
+  function clearBobLed(){ led0.classList.remove('lit-0'); led1.classList.remove('lit-1'); }
+  function clearEveLed(){ eveLed0.classList.remove('lit-0'); eveLed1.classList.remove('lit-1'); }
 
   /* ---------------- beam animation ---------------- */
   const beamArrow = document.getElementById('beamArrow');
+  const beamGlyph = document.getElementById('beamGlyph');
   const beamRail = document.querySelector('.beam-rail');
+  const TRAVEL_MARGIN = 64;
 
   function playSinglePhoton(result, durationMs){
     return new Promise(resolve => {
       const railW = beamRail.getBoundingClientRect().width;
-      const endX = Math.max(0, railW - 4);
+      const startX = TRAVEL_MARGIN;
+      const endX = Math.max(startX + 10, railW - TRAVEL_MARGIN);
       beamArrow.style.transition = 'none';
-      beamArrow.style.left = '0px';
-      beamArrow.style.color = 'var(--beam)';
-      beamArrow.textContent = ALICE_STATES[result.aliceKey].symbol;
+      beamArrow.style.left = startX + 'px';
+      beamGlyph.style.color = 'var(--beam)';
+      beamGlyph.textContent = ALICE_STATES[result.aliceKey].symbol;
       beamArrow.style.opacity = '1';
       void beamArrow.offsetWidth;
-      beamArrow.style.transition = `left ${durationMs}ms linear, color .25s linear, opacity .2s linear`;
+      beamArrow.style.transition = `left ${durationMs}ms linear, opacity .2s linear`;
       requestAnimationFrame(() => { beamArrow.style.left = endX + 'px'; });
-      if (result.eve){
-        setTimeout(() => {
-          beamArrow.textContent = symbolForBasisBit(result.eve.basis, result.eve.bit);
-          beamArrow.style.color = 'var(--eve-bright)';
-        }, durationMs * 0.5);
-      }
+
+      // midpoint of the trip lines up with Eve's station in the middle column
+      setTimeout(() => {
+        if (result.eve){
+          beamGlyph.textContent = symbolForBasisBit(result.eve.basis, result.eve.bit);
+          beamGlyph.style.color = 'var(--eve-bright)';
+          litLed(eveLed0, eveLed1, result.eve.bit);
+        }
+      }, durationMs * 0.5);
+
+      // end of the trip: photon reaches Bob's detector
+      setTimeout(() => {
+        litLed(led0, led1, result.bobBit);
+      }, durationMs);
+
       setTimeout(() => { beamArrow.style.opacity = '0'; resolve(); }, durationMs + 60);
     });
   }
 
   function playStreamSweep(totalMs, tinted){
     const railW = beamRail.getBoundingClientRect().width;
-    const endX = Math.max(0, railW - 4);
+    const startX = TRAVEL_MARGIN;
+    const endX = Math.max(startX + 10, railW - TRAVEL_MARGIN);
     beamArrow.style.transition = 'none';
-    beamArrow.style.left = '0px';
-    beamArrow.textContent = '\u2192';
-    beamArrow.style.color = tinted ? 'var(--eve-bright)' : 'var(--beam)';
+    beamArrow.style.left = startX + 'px';
+    beamGlyph.textContent = '\u2192';
+    beamGlyph.style.color = tinted ? 'var(--eve-bright)' : 'var(--beam)';
     beamArrow.style.opacity = '1';
     void beamArrow.offsetWidth;
     beamArrow.style.transition = `left ${totalMs}ms linear, opacity .2s linear`;
@@ -1078,14 +1141,14 @@
       alertBox.classList.toggle('show', !perfect);
     }
 
-    const aliceKeyBox = document.getElementById('aliceSiftedBox');
-    const bobKeyBox = document.getElementById('siftedKeyBox');
+    const aliceBits = document.getElementById('aliceKeyBits');
+    const bobBits = document.getElementById('bobKeyBits');
     if (matched.length === 0){
-      aliceKeyBox.innerHTML = '<span class="key-label">Alice —</span>sifted key will appear here once bases are compared…';
-      bobKeyBox.innerHTML = '<span class="key-label">Bob —</span>sifted key will appear here once bases are compared…';
+      aliceBits.textContent = 'sifted key will appear here once bases are compared…';
+      bobBits.textContent = 'sifted key will appear here once bases are compared…';
     } else {
-      aliceKeyBox.innerHTML = '<span class="key-label">Alice —</span>' + matched.map(r => r.aliceBit).join('');
-      bobKeyBox.innerHTML = '<span class="key-label">Bob —</span>' + matched.map(r => r.bobBit).join('');
+      aliceBits.textContent = matched.map(r => r.aliceBit).join('');
+      bobBits.textContent = matched.map(r => r.bobBit).join('');
     }
   }
 
@@ -1094,6 +1157,10 @@
   sendBtn.addEventListener('click', async () => {
     if (state.running) return;
     sendBtn.disabled = true;
+
+    // blank the readouts the instant a new photon is launched
+    clearBobLed();
+    clearEveLed();
 
     const opts = {
       aliceSetting: state.aliceRandom ? 'RANDOM' : state.aliceKey,
@@ -1161,8 +1228,9 @@
     state.running = true;
     setControlsDisabled(true);
     autoStatus.textContent = 'running…';
+    clearBobLed();
+    clearEveLed();
 
-    // total sweep time never exceeds 5s, and stays snappy for small batches
     const totalMs = Math.min(5000, 250 + count * 25);
     playStreamSweep(totalMs, opts.eveEnabled);
 
@@ -1200,16 +1268,18 @@
     setTimeout(() => { progressBar.style.width = '0%'; }, 1200);
   });
 
-  document.getElementById('clearLog').addEventListener('click', () => {
+  function clearLog(){
     state.log = [];
     aliceRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no photons sent yet</td></tr>';
     bobRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no measurements yet</td></tr>';
-    led0.classList.remove('lit-0'); led1.classList.remove('lit-1');
+    clearBobLed();
     clearEveLed();
     updateCounts();
     updateAnalysis();
     autoStatus.textContent = 'idle';
-  });
+  }
+  document.getElementById('clearLog').addEventListener('click', clearLog);
+  document.getElementById('clearLog2').addEventListener('click', clearLog);
 
   /* ---------------- CSV export ---------------- */
   function toCSV(rows){
