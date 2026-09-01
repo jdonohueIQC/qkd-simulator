@@ -286,6 +286,31 @@
   }
   .led .bulb.lit-0{ background: var(--led0); color:#04211d; border-color: var(--led0); box-shadow: 0 0 18px 4px rgba(51,230,200,.55); }
   .led .bulb.lit-1{ background: var(--led1); color:#2b1600; border-color: var(--led1); box-shadow: 0 0 18px 4px rgba(255,171,46,.55); }
+  /* on the physical station panels, both bulbs share one colour per player —
+     which one lit is shown by position/label, not by a different hue */
+  .bulb.bob-bulb.lit-0, .bulb.bob-bulb.lit-1{
+    background: var(--bob); color:#fff; border-color: var(--bob);
+    box-shadow: 0 0 18px 4px rgba(0,93,126,.55);
+  }
+  .bulb.eve-bulb.lit-0, .bulb.eve-bulb.lit-1{
+    background: var(--eve); color:#fff; border-color: var(--eve);
+    box-shadow: 0 0 18px 4px rgba(150,23,46,.55);
+  }
+  .bulb.alice-bulb.lit-0, .bulb.alice-bulb.lit-1{
+    background: var(--alice); color:#fff; border-color: var(--alice);
+    box-shadow: 0 0 18px 4px rgba(47,158,86,.55);
+  }
+
+  .basis-square{
+    width: 46px; height:46px; border-radius: var(--radius-sm);
+    background: #0e0e14; border: 2px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-mono); font-weight:700; font-size: 22px;
+    transition: all .15s;
+  }
+  .basis-square.bob-square{ color: var(--bob-bright); border-color: var(--bob); background: var(--bob-dim); }
+  .basis-square.eve-square{ color: var(--eve-bright); border-color: var(--eve); background: var(--eve-dim); }
+  .basis-square.alice-square{ color: var(--alice-bright); border-color: var(--alice); background: var(--alice-dim); }
 
   /* Eve empty state */
   .eve-off{
@@ -319,9 +344,9 @@
   .tag-eve{ color: var(--eve-bright); background: var(--eve-dim); border-color: var(--eve); }
   .beam-eve-marker{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    display:none;
+    display:none; align-items:center; gap:8px; z-index:2;
   }
-  .beam-eve-marker.show{ display:block; }
+  .beam-eve-marker.show{ display:flex; }
   .beam-endpoint{
     position:absolute; top:50%; transform:translateY(-50%);
     display:flex; align-items:center; gap:8px; z-index:2;
@@ -338,16 +363,23 @@
     width:7px; height:7px; border-radius:50%; background:var(--beam);
     box-shadow: 0 0 7px 2px var(--beam-glow);
   }
+  .laser-icon.eve-laser{ border-color: var(--eve); }
+  .laser-icon.eve-laser::after{
+    background: var(--eve);
+    box-shadow: 0 0 7px 2px rgba(150,23,46,.55);
+  }
   .detector-icon{
-    width:30px; height:58px; background:var(--bg-panel-2); border:1px solid var(--line);
-    border-left:none; border-top-right-radius:56px; border-bottom-right-radius:56px;
+    width:34px; height:64px; background:var(--bg-panel-2); border:2px solid var(--bob);
+    border-left:none; border-top-right-radius:60px; border-bottom-right-radius:60px;
     position:relative; display:flex; align-items:center; justify-content:center;
   }
+  .detector-icon.eve-detector{ border-color: var(--eve); }
   .detector-basis{
-    font-family: var(--font-mono); font-weight:700; font-size:16px;
-    color: var(--bob-bright); line-height:1; margin-left:4px;
+    font-family: var(--font-mono); font-weight:700; font-size:20px;
+    color: var(--bob-bright); line-height:1;
     transition: color .2s;
   }
+  .detector-basis.eve-basis{ color: var(--eve-bright); }
   .beam-photon{
     position:absolute; top:50%; left:0; transform:translate(-50%,-50%);
     width:38px; height:38px; border-radius:50%;
@@ -581,6 +613,12 @@
           <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
           <span class="fire-hint">pulse switch</span>
         </div>
+
+        <div class="detector">
+          <div class="led"><div class="basis-square alice-square" id="aliceBasisSquare">+</div></div>
+          <div class="led"><div class="bulb alice-bulb" id="aliceLed0">0</div></div>
+          <div class="led"><div class="bulb alice-bulb" id="aliceLed1">1</div></div>
+        </div>
       </div>
 
       <!-- EVE -->
@@ -601,8 +639,9 @@
           <div class="pill-row" id="evePills"></div>
           <div class="station-note" id="eveNote">Measuring in H/V</div>
           <div class="detector">
-            <div class="led"><div class="bulb" id="eveLed0">0</div></div>
-            <div class="led"><div class="bulb" id="eveLed1">1</div></div>
+            <div class="led"><div class="basis-square eve-square" id="eveBasisSquare">+</div></div>
+            <div class="led"><div class="bulb eve-bulb" id="eveLed0">0</div></div>
+            <div class="led"><div class="bulb eve-bulb" id="eveLed1">1</div></div>
           </div>
         </div>
         <div id="eveOffBlock" class="eve-off">
@@ -624,8 +663,9 @@
         <div class="station-note" id="bobNote">Measuring in H/V</div>
 
         <div class="detector">
-          <div class="led"><div class="bulb" id="led0">0</div></div>
-          <div class="led"><div class="bulb" id="led1">1</div></div>
+          <div class="led"><div class="basis-square bob-square" id="bobBasisSquare">+</div></div>
+          <div class="led"><div class="bulb bob-bulb" id="led0">0</div></div>
+          <div class="led"><div class="bulb bob-bulb" id="led1">1</div></div>
         </div>
       </div>
     </div>
@@ -645,7 +685,11 @@
       <div class="beam-icon laser-icon"></div>
     </div>
 
-    <div class="beam-eve-marker" id="beamEveMarker"><span class="tag-pill tag-eve">Eve</span></div>
+    <div class="beam-eve-marker" id="beamEveMarker">
+      <div class="beam-icon detector-icon eve-detector"><span class="detector-basis eve-basis" id="eveDetectorBasisIcon">+</span></div>
+      <span class="tag-pill tag-eve">Eve</span>
+      <div class="beam-icon laser-icon eve-laser"></div>
+    </div>
 
     <div class="beam-endpoint end">
       <div class="beam-icon detector-icon"><span class="detector-basis" id="detectorBasisIcon">+</span></div>
@@ -736,8 +780,8 @@
         <div class="key-group">
           <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Raw</span></div><div class="row-bits" id="aliceRawBits">no photons sent yet</div></div>
           <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Bases</span></div><div class="row-bits" id="aliceBasesBits">no photons sent yet</div></div>
-          <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Raw</span></div><div class="row-bits" id="bobRawBits">no measurements yet</div></div>
           <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Bases</span></div><div class="row-bits" id="bobBasesBits">no measurements yet</div></div>
+          <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Raw</span></div><div class="row-bits" id="bobRawBits">no measurements yet</div></div>
           <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Sifted</span></div><div class="row-bits" id="aliceSiftedBits">no bases compared yet</div></div>
           <div class="key-row bob-row"><div class="row-label"><span class="who">Bob</span><span class="what">Sifted</span></div><div class="row-bits" id="bobSiftedBits">no bases compared yet</div></div>
         </div>
@@ -944,14 +988,35 @@
     ['HV','DA'].map(k => ({ key:k, angle: EVE_BASES[k].angle, label: EVE_BASES[k].label })));
 
   const detectorBasisIcon = document.getElementById('detectorBasisIcon');
+  const eveDetectorBasisIconRail = document.getElementById('eveDetectorBasisIcon');
+  const bobBasisSquare = document.getElementById('bobBasisSquare');
+  const eveBasisSquare = document.getElementById('eveBasisSquare');
+  const aliceBasisSquare = document.getElementById('aliceBasisSquare');
+  const aliceLed0 = document.getElementById('aliceLed0');
+  const aliceLed1 = document.getElementById('aliceLed1');
+
   function setBobBasisDial(key){
     bobDial.setKey(key);
-    detectorBasisIcon.textContent = key === 'HV' ? '+' : '\u00D7';
+    const sym = key === 'HV' ? '+' : '\u00D7';
+    detectorBasisIcon.textContent = sym;
+    bobBasisSquare.textContent = sym;
+  }
+  function setEveBasisDial(key){
+    eveDial.setKey(key);
+    const sym = key === 'HV' ? '+' : '\u00D7';
+    eveDetectorBasisIconRail.textContent = sym;
+    eveBasisSquare.textContent = sym;
+  }
+  function setAliceIndicator(key){
+    const s = ALICE_STATES[key];
+    aliceBasisSquare.textContent = s.basis === 'HV' ? '+' : '\u00D7';
+    litLed(aliceLed0, aliceLed1, s.bit);
   }
 
   aliceDial.setKey('H');
   setBobBasisDial('HV');
-  eveDial.setKey('HV');
+  setEveBasisDial('HV');
+  setAliceIndicator('H');
 
   /* ---- pill rows ---- */
   function buildPills(container, options, onPick){
@@ -978,7 +1043,7 @@
     { key:'A', label:'−45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
   ], (key) => {
     if (key === 'RANDOM'){ state.aliceRandom = true; }
-    else { state.aliceRandom = false; state.aliceKey = key; aliceDial.setKey(key); }
+    else { state.aliceRandom = false; state.aliceKey = key; aliceDial.setKey(key); setAliceIndicator(key); }
     refreshAll();
   });
 
@@ -994,7 +1059,7 @@
     { key:'HV', label:'H/V' }, { key:'DA', label:'±45°' }, { key:'RANDOM', label:'🎲 Random', rand:true }
   ], (key) => {
     if (key === 'RANDOM'){ state.eveRandom = true; }
-    else { state.eveRandom = false; state.eveBasis = key; eveDial.setKey(key); }
+    else { state.eveRandom = false; state.eveBasis = key; setEveBasisDial(key); }
     refreshAll();
   });
 
@@ -1227,8 +1292,9 @@
     const result = sendOnePhoton(opts);
 
     aliceDial.setKey(result.aliceKey);
+    setAliceIndicator(result.aliceKey);
     setBobBasisDial(result.bobBasis);
-    if (result.eve) eveDial.setKey(result.eve.basis);
+    if (result.eve) setEveBasisDial(result.eve.basis);
     if (state.aliceRandom) noteRandomAlice(result.aliceKey);
     if (state.bobRandom) noteRandomBob(result.bobBasis);
     if (state.eveEnabled && state.eveRandom && result.eve) noteRandomEve(result.eve.basis);
@@ -1298,8 +1364,9 @@
       while (processed < shouldHave){
         const result = sendOnePhoton(opts);
         aliceDial.setKey(result.aliceKey);
+        setAliceIndicator(result.aliceKey);
         setBobBasisDial(result.bobBasis);
-        if (result.eve) eveDial.setKey(result.eve.basis);
+        if (result.eve) setEveBasisDial(result.eve.basis);
         addRecord({
           n: state.log.length + 1,
           aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
