@@ -249,7 +249,7 @@
   .speed-toggle-wrap .pill.active{ background: var(--beam); border-color: var(--beam); color:#06210f; }
 
   /* Alice launch button */
-  .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top: 6px; }
+  .fire-btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
   .fire-btn{
     width: 86px; height: 86px; border-radius: 50%;
     background: linear-gradient(180deg, var(--alice), #1c6a38);
@@ -271,9 +271,11 @@
     border-radius: var(--radius-sm);
     padding: 14px;
     display:flex;
+    align-items:flex-start;
     justify-content:center;
     gap: 22px;
     margin-top: 4px;
+    flex-wrap: wrap;
   }
   .led{ display:flex; flex-direction:column; align-items:center; gap:8px; }
   .led .bulb{
@@ -609,12 +611,11 @@
         <div class="pill-row" id="alicePills"></div>
         <div class="station-note" id="aliceNote">Sending <strong>H</strong> · basis H/V</div>
 
-        <div class="fire-btn-wrap">
-          <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
-          <span class="fire-hint">pulse switch</span>
-        </div>
-
         <div class="detector">
+          <div class="fire-btn-wrap">
+            <button class="fire-btn" id="sendBtn">SEND<br>PHOTON</button>
+            <span class="fire-hint">pulse switch</span>
+          </div>
           <div class="led"><div class="basis-square alice-square" id="aliceBasisSquare">+</div></div>
           <div class="led"><div class="bulb alice-bulb" id="aliceLed0">0</div></div>
           <div class="led"><div class="bulb alice-bulb" id="aliceLed1">1</div></div>
