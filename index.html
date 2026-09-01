@@ -476,6 +476,17 @@
   }
   .stat.clear-slot{ display:flex; align-items:center; justify-content:center; }
   .stat.clear-slot .btn{ width:100%; }
+  .log-trunc-notice{
+    display:none;
+    margin-top: 12px;
+    border: 1px solid var(--gold);
+    background: rgba(255,199,44,.08);
+    color: #ffe6a3;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .log-trunc-notice.show{ display:block; }
   .stat .label{ font-family: var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:6px; }
   .stat .value{ font-family: var(--font-display); font-size: 22px; font-weight:700; }
   .stat.warn .value{ color: var(--eve-bright); }
@@ -502,6 +513,10 @@
   .key-row.alice-row .row-bits{ color: var(--alice-bright); }
   .key-row.bob-row .who,
   .key-row.bob-row .row-bits{ color: var(--bob-bright); }
+  /* a base mismatch means this position is discarded during sifting */
+  .row-bits .bit-unused{ color: var(--text-faint); }
+  /* a bit mismatch after sifting is a real error in the shared key */
+  .row-bits .bit-error{ color: #ff5b6b; font-weight:700; }
   .alert-banner{
     margin-top:12px;
     border: 1px solid var(--eve);
@@ -707,7 +722,7 @@
       <div class="console-grid">
         <div class="field">
           <label for="autoCount">Qubits to send</label>
-          <input type="number" id="autoCount" value="40" min="1" max="5000">
+          <input type="number" id="autoCount" value="40" min="1" max="200">
         </div>
         <div class="field">
           <label for="autoAlice">Alice's setting</label>
@@ -777,6 +792,7 @@
         <div class="stat ok"><div class="label">Sifted key length</div><div class="value" id="statSifted">0</div></div>
         <div class="stat" id="statErrCard"><div class="label">Error rate (QBER)</div><div class="value" id="statError">—</div></div>
       </div>
+      <div class="log-trunc-notice" id="logTruncNotice">Log limit exceeded. Only the most recent 200 bits will be displayed.</div>
       <div class="key-table">
         <div class="key-group">
           <div class="key-row alice-row"><div class="row-label"><span class="who">Alice</span><span class="what">Raw</span></div><div class="row-bits" id="aliceRawBits">no photons sent yet</div></div>
@@ -968,6 +984,8 @@
   }
 
   /* ---------------- app state ---------------- */
+  const MAX_LOG = 200; // cap on qubits kept in memory/displayed at once, to stay smooth in the browser
+
   const state = {
     aliceKey: 'H',
     bobBasis: 'HV',
@@ -977,7 +995,11 @@
     bobRandom: false,
     eveRandom: false,
     speedFactor: 1,
-    log: [],
+    log: [],            // sliding window of at most MAX_LOG recent records (for display only)
+    totalSent: 0,       // true cumulative counts — never trimmed
+    totalMatched: 0,
+    totalErrors: 0,
+    truncated: false,   // true once older records have been dropped from the window
     running: false
   };
 
@@ -1185,13 +1207,34 @@
   function csvBasis(b){ return b === 'HV' ? 'Z' : 'X'; }
 
   function addRecord(rec){
+    state.totalSent++;
+    rec.n = state.totalSent;
+
+    const basisMatch = rec.aliceBasis === rec.bobBasis;
+    if (basisMatch){
+      state.totalMatched++;
+      if (rec.aliceBit !== rec.bobBit) state.totalErrors++;
+    }
+
     state.log.push(rec);
+    if (state.log.length > MAX_LOG){
+      state.log.shift();
+      state.truncated = true;
+    }
+
     renderLastRow(rec);
+    trimTableRows(aliceRowsEl);
+    trimTableRows(bobRowsEl);
+
     litLed(led0, led1, rec.bobBit);
     if (rec.eveIntercepted) litLed(eveLed0, eveLed1, rec.eveBit);
     else if (state.eveEnabled) clearEveLed();
     updateAnalysis();
     updateCounts();
+  }
+
+  function trimTableRows(tbody){
+    while (tbody.children.length > MAX_LOG) tbody.removeChild(tbody.firstElementChild);
   }
 
   function renderLastRow(rec){
@@ -1223,28 +1266,32 @@
   }
 
   function updateAnalysis(){
-    const sent = state.log.length;
-    const matched = state.log.filter(r => r.aliceBasis === r.bobBasis);
-    const errors = matched.filter(r => r.aliceBit !== r.bobBit);
-    document.getElementById('statSent').textContent = sent;
-    document.getElementById('statMatched').textContent = matched.length;
-    document.getElementById('statSifted').textContent = matched.length;
+    document.getElementById('statSent').textContent = state.totalSent;
+    document.getElementById('statMatched').textContent = state.totalMatched;
+    document.getElementById('statSifted').textContent = state.totalMatched;
 
     const errCard = document.getElementById('statErrCard');
     const errEl = document.getElementById('statError');
     const alertBox = document.getElementById('eveAlert');
-    if (matched.length === 0){
+    if (state.totalMatched === 0){
       errEl.textContent = '—';
       errCard.classList.remove('warn','ok');
       alertBox.classList.remove('show');
     } else {
-      const rate = errors.length / matched.length;
+      const rate = state.totalErrors / state.totalMatched;
       const perfect = rate === 0;
       errEl.textContent = (rate*100).toFixed(1) + '%';
       errCard.classList.toggle('warn', !perfect);
       errCard.classList.toggle('ok', perfect);
       alertBox.classList.toggle('show', !perfect);
     }
+
+    document.getElementById('logTruncNotice').classList.toggle('show', state.truncated);
+
+    // the raw/bases/sifted trails only ever render the current MAX_LOG-sized window —
+    // this keeps the string-building below cheap no matter how much has been sent overall
+    const windowLog = state.log;
+    const windowMatched = windowLog.filter(r => r.aliceBasis === r.bobBasis);
 
     const aliceRawEl = document.getElementById('aliceRawBits');
     const aliceBasesEl = document.getElementById('aliceBasesBits');
@@ -1253,23 +1300,41 @@
     const bobBasesEl = document.getElementById('bobBasesBits');
     const bobSiftedEl = document.getElementById('bobSiftedBits');
 
-    if (sent === 0){
+    if (windowLog.length === 0){
       aliceRawEl.textContent = 'no photons sent yet';
       aliceBasesEl.textContent = 'no photons sent yet';
       bobRawEl.textContent = 'no measurements yet';
       bobBasesEl.textContent = 'no measurements yet';
     } else {
-      aliceRawEl.textContent = state.log.map(r => r.aliceBit).join('');
-      aliceBasesEl.textContent = state.log.map(r => csvBasis(r.aliceBasis)).join('');
-      bobRawEl.textContent = state.log.map(r => r.bobBit).join('');
-      bobBasesEl.textContent = state.log.map(r => csvBasis(r.bobBasis)).join('');
+      aliceRawEl.innerHTML = windowLog.map(r => {
+        const unused = r.aliceBasis !== r.bobBasis;
+        return `<span${unused ? ' class="bit-unused"' : ''}>${r.aliceBit}</span>`;
+      }).join('');
+      aliceBasesEl.innerHTML = windowLog.map(r => {
+        const unused = r.aliceBasis !== r.bobBasis;
+        return `<span${unused ? ' class="bit-unused"' : ''}>${csvBasis(r.aliceBasis)}</span>`;
+      }).join('');
+      bobRawEl.innerHTML = windowLog.map(r => {
+        const unused = r.aliceBasis !== r.bobBasis;
+        return `<span${unused ? ' class="bit-unused"' : ''}>${r.bobBit}</span>`;
+      }).join('');
+      bobBasesEl.innerHTML = windowLog.map(r => {
+        const unused = r.aliceBasis !== r.bobBasis;
+        return `<span${unused ? ' class="bit-unused"' : ''}>${csvBasis(r.bobBasis)}</span>`;
+      }).join('');
     }
-    if (matched.length === 0){
+    if (windowMatched.length === 0){
       aliceSiftedEl.textContent = 'no bases compared yet';
       bobSiftedEl.textContent = 'no bases compared yet';
     } else {
-      aliceSiftedEl.textContent = matched.map(r => r.aliceBit).join('');
-      bobSiftedEl.textContent = matched.map(r => r.bobBit).join('');
+      aliceSiftedEl.innerHTML = windowMatched.map(r => {
+        const err = r.aliceBit !== r.bobBit;
+        return `<span${err ? ' class="bit-error"' : ''}>${r.aliceBit}</span>`;
+      }).join('');
+      bobSiftedEl.innerHTML = windowMatched.map(r => {
+        const err = r.aliceBit !== r.bobBit;
+        return `<span${err ? ' class="bit-error"' : ''}>${r.bobBit}</span>`;
+      }).join('');
     }
   }
 
@@ -1303,7 +1368,6 @@
     await playSinglePhoton(result, 1000 / state.speedFactor);
 
     addRecord({
-      n: state.log.length + 1,
       aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
       eveIntercepted: !!result.eve, eveBit: result.eve ? result.eve.bit : null,
       bobBasis: result.bobBasis, bobBit: result.bobBit
@@ -1312,6 +1376,14 @@
   });
 
   /* ---------------- automation ---------------- */
+  const autoCountInput = document.getElementById('autoCount');
+  autoCountInput.addEventListener('change', () => {
+    let v = parseInt(autoCountInput.value, 10);
+    if (!Number.isFinite(v)) v = 1;
+    v = Math.max(1, Math.min(MAX_LOG, v));
+    autoCountInput.value = v;
+  });
+
   const autoEveEnable = document.getElementById('autoEveEnable');
   const autoEveBasis = document.getElementById('autoEveBasis');
   const autoEveProb = document.getElementById('autoEveProb');
@@ -1338,7 +1410,7 @@
   }
 
   runBtn.addEventListener('click', async () => {
-    const count = Math.max(1, Math.min(5000, parseInt(document.getElementById('autoCount').value, 10) || 1));
+    const count = Math.max(1, Math.min(MAX_LOG, parseInt(document.getElementById('autoCount').value, 10) || 1));
     const opts = {
       aliceSetting: document.getElementById('autoAlice').value,
       bobSetting: document.getElementById('autoBob').value,
@@ -1369,7 +1441,6 @@
         setBobBasisDial(result.bobBasis);
         if (result.eve) setEveBasisDial(result.eve.basis);
         addRecord({
-          n: state.log.length + 1,
           aliceBasis: result.aliceBasis, aliceBit: result.aliceBit,
           eveIntercepted: !!result.eve, eveBit: result.eve ? result.eve.bit : null,
           bobBasis: result.bobBasis, bobBit: result.bobBit
@@ -1388,6 +1459,10 @@
 
   function clearLog(){
     state.log = [];
+    state.totalSent = 0;
+    state.totalMatched = 0;
+    state.totalErrors = 0;
+    state.truncated = false;
     aliceRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no photons sent yet</td></tr>';
     bobRowsEl.innerHTML = '<tr class="empty-row"><td colspan="3">no measurements yet</td></tr>';
     clearBobLed();
